@@ -1,5 +1,7 @@
 # Pre-release audit — AWI V1
 
+Historical audit record for the local audit commit. Its hosted-CI gate was subsequently satisfied for d2514af by [run 39208844432](https://github.com/jigar48/awi/actions/runs/39208844432). Later release-preparation commits require their own CI. See the current [verification record](verification.md) and [release procedure](releasing.md); the original findings and audit-time recommendation below are preserved.
+
 Date: October 19, 2026. Baseline: commit `9bc61c1`, branch `codex/awi-v1`. This audit inspected the implementation, original supplied brief, all original 37 tests, documentation, packaged artifacts and CI configuration. The brief ends mid-sentence in report redaction; no absent requirements are claimed. Changes fix V1 defects and release verification gaps; no new product features or remote actions were introduced.
 
 ## Recommendation

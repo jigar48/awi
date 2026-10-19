@@ -1,0 +1,4 @@
+{
+  "description": "Local-first linter for AI agent traces. Detect retry loops, repeated tool calls, execution cycles, and suspicious resource burn.",
+  "homepage": "https://github.com/jigar48/awi#readme"
+}

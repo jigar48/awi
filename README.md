@@ -1,10 +1,23 @@
 # Agent Workflow Inspector (AWI)
 
-**Find loops, retries, and wasted work in AI agent traces.**
+**Local-first, deterministic diagnostics for AI agent execution traces.**
 
-AWI is a local, deterministic linter for recorded agent workflows. It reads versioned AWI JSON or a documented subset of OTLP JSON and produces evidence for local review or CI. Analysis requires no account, LLM, network, browser, or service.
+Agent Workflow Inspector is a local-first, deterministic linter for AI agent execution traces that detects suspicious retry loops, repeated tool calls, execution cycles, and resource burn. It reads versioned AWI JSON or a documented subset of OTLP JSON and produces evidence for local review or CI. Analysis requires no account, LLM, network, browser, or service. AWI sends no automatic telemetry.
 
 Findings are heuristics, not proof of bugs or waste. Repeated polling and intentional retries can match. AWI does not infer agent intent or causal dependencies from timestamps.
+
+## Install and quick start
+
+Version 1.0.0 is a release candidate and is **not yet published to npm**. Once publication is confirmed, install the exact release with:
+
+```sh
+npm install --global agent-workflow-inspector@1.0.0
+awi --help
+awi --version
+awi inspect trace.json --format json
+```
+
+Create `trace.json` using the [minimal trace example](docs/getting-started.md). Until publication, use the source or tarball instructions below. Supported Node versions are **22.18+ (22.x), 24.11+ (24.x), or 26.x**.
 
 ## Run from source
 
@@ -20,7 +33,7 @@ node dist/cli/index.js inspect examples/opentelemetry/tools.json --input-format 
 
 The suspicious example exits 2 by default. For a local installation, run `pnpm pack --out agent-workflow-inspector-1.0.0.tgz`, then `pnpm add --global ./agent-workflow-inspector-1.0.0.tgz`. The package exposes the `awi` executable and an ESM TypeScript library.
 
-This implementation has not been published. The npm registry returned 404 for `agent-workflow-inspector` on October 19, 2026; this neither reserves the name nor guarantees future availability.
+The npm registry returned 404 for `agent-workflow-inspector` on October 19, 2026; this neither reserves the name nor guarantees future availability.
 
 ## CLI
 
@@ -71,5 +84,13 @@ Library and CLI share validators, limits, detectors, and report contracts. Use i
 - [Pre-release audit](docs/audit.md)
 - [Verification record](docs/verification.md)
 - [Contributing](CONTRIBUTING.md)
+- [Release notes](docs/releases/v1.0.0.md)
+- [Maintainer release procedure](docs/releasing.md)
 
 MIT licensed. No framework-specific compatibility claims are made beyond the documented input mappings.
+
+## Work With Me
+
+Maintained by [Jigar Prajapati](https://github.com/jigar48). For automation and AI tooling projects, visit my [portfolio](https://jigar48.github.io/automatewithjigar/) or connect on [LinkedIn](https://www.linkedin.com/in/buildaiwith-jigar-prajapati/).
+
+If AWI is useful, [optional support](https://buymeacoffee.com/buildwithjigar) helps sustain maintenance. Contributions and reproducible bug reports are welcome; see [Contributing](CONTRIBUTING.md) and [Security](SECURITY.md).

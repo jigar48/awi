@@ -1,10 +1,28 @@
 {
   "name": "agent-workflow-inspector",
   "version": "1.0.0",
-  "description": "Find loops, retries, and wasted work in AI agent traces.",
+  "description": "Local-first, deterministic linter for AI agent traces: detect suspicious retries, repeated tool calls, execution cycles, and resource burn.",
   "type": "module",
   "license": "MIT",
   "author": "Jigar Prajapati",
+  "homepage": "https://github.com/jigar48/awi#readme",
+  "bugs": {
+    "url": "https://github.com/jigar48/awi/issues"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://buymeacoffee.com/buildwithjigar"
+  },
+  "keywords": [
+    "ai-agents",
+    "agent-observability",
+    "opentelemetry",
+    "developer-tools",
+    "typescript",
+    "cli",
+    "ai-debugging",
+    "trace-analysis"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/jigar48/awi.git"

@@ -1,6 +1,14 @@
 # Verification record
 
-Audit date: October 19, 2026. Package manager: pnpm 11.25.0. Baseline implementation: 9bc61c1. See [audit findings and release recommendation](audit.md).
+Audit date: October 19, 2026. Package manager: pnpm 11.25.0. Baseline implementation: 9bc61c1. See the historical [audit findings](audit.md) and current [release procedure](releasing.md).
+
+## Hosted CI and release candidate
+
+The [nine-job hosted CI run](https://github.com/jigar48/awi/actions/runs/39208844432) completed successfully for `d2514af3e9d4a7b11a53308a77ab2ca40333d8ce`. Windows, macOS and Ubuntu each passed on Node 22.18.0, 24.11.0 and 26, including all 69 tests, typecheck/lint/build, formatting, schema consistency, production dependency audit, packing and isolated package installation/API checks.
+
+The platform table below records the earlier local audit only. The hosted run resolves that audit's platform gate for d2514af. Later local release-preparation changes affect documentation/package metadata, not runtime source or dependencies. They require a fresh nine-job main run before publication; earlier CI does not validate them. No tag, GitHub release or npm publication has been performed.
+
+Release-preparation validation on Windows Node 24.19.0: `pnpm install --frozen-lockfile`, `pnpm check` (69 passing tests, typecheck, lint, JS/declaration build), `pnpm format:check`, `pnpm schemas` (before/after schema hashes unchanged), full `pnpm audit` (no known vulnerabilities), `pnpm smoke:package` (clean external consumer, all shipped examples/options, ESM and strict TypeScript imports), and `git diff --check` passed. Runtime source, tests, dependencies, lockfile and CI workflow remain identical to d2514af. Local documentation links and prepared GitHub topic syntax were checked; version-tagged release links intentionally await tag creation. Maintainer GitHub/portfolio/support links responded successfully; LinkedIn rejects HEAD checks, so that supplied URL is retained without claiming live content verification. Candidate artifact byte counts, SHA-256/SHA-512 and source SHA are recorded outside the package in the local release manifest.
 
 ## Actual platform checks
 
@@ -27,4 +35,4 @@ WSL uses real Linux Node distributions and independent Linux dependencies. Downl
 
 A cold-filesystem declaration compilation timeout and a multi-process CLI test timeout were diagnosed as test-harness I/O budgets, not waived product assertions. CLI setup compiles runtime JS with a bounded setup timeout; full builds/consumer typechecks still verify declarations. CLI subprocesses and end-to-end I/O cases have explicit budgets; detector performance checks remain unchanged.
 
-No push, npm publish, tag, public release, deployment, private-trace upload or remote repository mutation was performed. **NO-GO for publishing until the configured hosted matrix passes, especially macOS.**
+During the original local audit, no remote mutations occurred. The later authorized feature-branch push produced the successful hosted run above. **Publication remains blocked until approval, a fresh successful matrix on the final main candidate, and npm authentication/name checks.** See [release procedure](releasing.md).
