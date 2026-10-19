@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 280" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bannerBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090d13"/>
+      <stop offset="50%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <style>
+    .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+
+  <!-- Background -->
+  <rect width="1000" height="280" rx="16" fill="url(#bannerBg)" stroke="#30363d" stroke-width="1.5"/>
+
+  <!-- Subtle Grid Pattern in Background -->
+  <g opacity="0.08" stroke="#ffffff" stroke-width="1">
+    <line x1="50" y1="0" x2="50" y2="280"/>
+    <line x1="150" y1="0" x2="150" y2="280"/>
+    <line x1="250" y1="0" x2="250" y2="280"/>
+    <line x1="350" y1="0" x2="350" y2="280"/>
+    <line x1="450" y1="0" x2="450" y2="280"/>
+    <line x1="550" y1="0" x2="550" y2="280"/>
+    <line x1="650" y1="0" x2="650" y2="280"/>
+    <line x1="750" y1="0" x2="750" y2="280"/>
+    <line x1="850" y1="0" x2="850" y2="280"/>
+    <line x1="950" y1="0" x2="950" y2="280"/>
+    <line x1="0" y1="70" x2="1000" y2="70"/>
+    <line x1="0" y1="140" x2="1000" y2="140"/>
+    <line x1="0" y1="210" x2="1000" y2="210"/>
+  </g>
+
+  <!-- Left Icon / Badge -->
+  <g transform="translate(60, 65)">
+    <!-- Outer Glow & Shield Frame -->
+    <rect width="140" height="140" rx="28" fill="#131d2e" stroke="#1e3a5f" stroke-width="2"/>
+    <rect x="12" y="12" width="116" height="116" rx="20" fill="url(#shieldGrad)" opacity="0.15"/>
+    
+    <!-- Inspector Graphic: Magnifying Glass + Trace Loop Node -->
+    <!-- Loop Nodes -->
+    <circle cx="50" cy="52" r="8" fill="#38bdf8"/>
+    <circle cx="90" cy="52" r="8" fill="#818cf8"/>
+    <circle cx="70" cy="88" r="8" fill="#f43f5e"/>
+
+    <!-- Connecting path -->
+    <path d="M 58 52 L 82 52" stroke="#38bdf8" stroke-width="2.5"/>
+    <path d="M 88 58 L 74 82" stroke="#818cf8" stroke-width="2.5"/>
+    <path d="M 66 82 L 52 58" stroke="#f43f5e" stroke-width="2.5" stroke-dasharray="3 2"/>
+
+    <!-- Warning badge on loop -->
+    <circle cx="70" cy="88" r="14" fill="none" stroke="#f43f5e" stroke-width="2" opacity="0.8"/>
+    <text x="70" y="122" text-anchor="middle" class="font-mono" font-size="11" font-weight="700" fill="#38bdf8">AWI v1.0</text>
+  </g>
+
+  <!-- Main Titles -->
+  <g transform="translate(235, 78)">
+    <text x="0" y="32" class="font-sans" font-size="34" font-weight="800" fill="url(#textGrad)" letter-spacing="-0.5">Agent Workflow Inspector</text>
+    
+    <text x="0" y="66" class="font-sans" font-size="17" font-weight="500" fill="#e6edf3">
+      Local-first, deterministic diagnostics &amp; linter for AI agent execution traces
+    </text>
+
+    <text x="0" y="94" class="font-sans" font-size="13.5" fill="#8b949e">
+      Detect suspicious retry storms, loops, cycles, and token waste • Zero LLM • Zero telemetry • Offline &amp; CI-ready
+    </text>
+
+    <!-- Badges Row Inside Banner -->
+    <g transform="translate(0, 114)">
+      <rect width="112" height="24" rx="12" fill="#1f2937" stroke="#374151"/>
+      <circle cx="12" cy="12" r="4" fill="#38bdf8"/>
+      <text x="22" y="16" class="font-sans" font-size="11" font-weight="600" fill="#f3f4f6">100% Local</text>
+
+      <rect x="122" width="138" height="24" rx="12" fill="#1f2937" stroke="#374151"/>
+      <circle cx="134" cy="12" r="4" fill="#34d399"/>
+      <text x="144" y="16" class="font-sans" font-size="11" font-weight="600" fill="#f3f4f6">Deterministic</text>
+
+      <rect x="270" width="150" height="24" rx="12" fill="#1f2937" stroke="#374151"/>
+      <circle cx="282" cy="12" r="4" fill="#fbbf24"/>
+      <text x="292" y="16" class="font-sans" font-size="11" font-weight="600" fill="#f3f4f6">OTLP &amp; AWI JSON</text>
+
+      <rect x="430" width="128" height="24" rx="12" fill="#1f2937" stroke="#374151"/>
+      <circle cx="442" cy="12" r="4" fill="#a855f7"/>
+      <text x="452" y="16" class="font-sans" font-size="11" font-weight="600" fill="#f3f4f6">CLI &amp; TS API</text>
+
+      <rect x="568" width="118" height="24" rx="12" fill="#1f2937" stroke="#374151"/>
+      <circle cx="580" cy="12" r="4" fill="#f43f5e"/>
+      <text x="590" y="16" class="font-sans" font-size="11" font-weight="600" fill="#f3f4f6">CI Gatekeeper</text>
+    </g>
+  </g>
+</svg>

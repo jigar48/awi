@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 540" width="100%" height="100%">
+  <defs>
+    <linearGradient id="terminalBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#161b22"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <style>
+    .window { fill: url(#terminalBg); stroke: #30363d; stroke-width: 1; rx: 10px; }
+    .header { fill: #161b22; stroke: #30363d; stroke-width: 1; }
+    .title { fill: #8b949e; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; font-weight: 500; text-anchor: middle; }
+    .text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; line-height: 20px; }
+    .cmd { fill: #58a6ff; font-weight: 600; }
+    .prompt { fill: #7ee787; font-weight: 600; }
+    .dim { fill: #8b949e; }
+    .info { fill: #c9d1d9; }
+    .high-badge { fill: #f85149; font-weight: bold; }
+    .high-title { fill: #ff7b72; font-weight: 600; }
+    .med-badge { fill: #d29922; font-weight: bold; }
+    .med-title { fill: #e3b341; font-weight: 600; }
+    .desc { fill: #8b949e; }
+    .evidence { fill: #79c0ff; }
+    .summary { fill: #f85149; font-weight: 600; }
+    .exit-code { fill: #ff7b72; font-weight: bold; }
+  </style>
+
+  <g filter="url(#shadow)">
+    <!-- Terminal Window -->
+    <rect x="20" y="20" width="880" height="500" rx="10" class="window" />
+    
+    <!-- Title Bar -->
+    <path d="M 20 30 Q 20 20 30 20 L 890 20 Q 900 20 900 30 L 900 56 L 20 56 Z" fill="#161b22" stroke="#30363d" stroke-width="1" />
+    <line x1="20" y1="56" x2="900" y2="56" stroke="#30363d" stroke-width="1"/>
+
+    <!-- Mac-style Window Controls -->
+    <circle cx="42" cy="38" r="6" fill="#ff5f56" stroke="#e0443e" stroke-width="0.5"/>
+    <circle cx="62" cy="38" r="6" fill="#ffbd2e" stroke="#dea123" stroke-width="0.5"/>
+    <circle cx="82" cy="38" r="6" fill="#27c93f" stroke="#1aab29" stroke-width="0.5"/>
+
+    <!-- Title -->
+    <text x="460" y="42" class="title">awi inspect examples/suspicious/retries.json</text>
+
+    <!-- Terminal Content -->
+    <g transform="translate(42, 86)">
+      <!-- Command line -->
+      <text x="0" y="0" class="text">
+        <tspan class="prompt">$ </tspan>
+        <tspan class="cmd">awi inspect examples/suspicious/retries.json</tspan>
+      </text>
+
+      <text x="0" y="26" class="text info">Agent Workflow Inspector — Find loops, retries, and wasted work in AI agent traces.</text>
+      <text x="0" y="46" class="text dim">Trace retries: 5 operations, 5 tool calls, depth 1; duration 9000 ms; recorded leaf usage {"inputTokens":50}</text>
+
+      <!-- Finding 1: AWI002 -->
+      <text x="0" y="80" class="text">
+        <tspan class="high-badge">[HIGH] </tspan>
+        <tspan class="high-title">AWI002 Repeated identical failing tool call (high evidence)</tspan>
+      </text>
+      <text x="16" y="100" class="text dim">Trace: retries; operations: op-0, op-1, op-2, op-3, op-4</text>
+      <text x="16" y="120" class="text info">Equivalent recorded tool calls failed with matching error evidence.</text>
+      <text x="16" y="140" class="text evidence">Evidence: {"occurrences":5,"identicalArguments":true,"equivalentFailureOutcomes":true}</text>
+
+      <!-- Finding 2: AWI004 -->
+      <text x="0" y="174" class="text">
+        <tspan class="high-badge">[HIGH] </tspan>
+        <tspan class="high-title">AWI004 Retry storm (moderate evidence)</tspan>
+      </text>
+      <text x="16" y="194" class="text dim">Trace: retries; operations: op-0, op-1, op-2, op-3, op-4</text>
+      <text x="16" y="214" class="text info">Rapid equivalent attempts follow explicit failures in a 30s window.</text>
+      <text x="16" y="234" class="text evidence">Evidence: {"attempts":5,"windowSeconds":30,"priorAttemptsExplicitlyFailed":true}</text>
+
+      <!-- Finding 3: AWI006 -->
+      <text x="0" y="268" class="text">
+        <tspan class="med-badge">[MEDIUM] </tspan>
+        <tspan class="med-title">AWI006 Recorded resource usage associated with suspicious execution</tspan>
+      </text>
+      <text x="16" y="288" class="text dim">Trace: retries; operations: op-0, op-1, op-2, op-3, op-4</text>
+      <text x="16" y="308" class="text info">Recorded resources belong directly to operations in suspicious patterns.</text>
+      <text x="16" y="328" class="text evidence">Evidence: {"recordedUsage":{"inputTokens":50},"recordedCosts":{"USD":0.005},"relatedRules":["AWI002","AWI004"]}</text>
+
+      <!-- Footer summary -->
+      <line x1="0" y1="354" x2="836" y2="354" stroke="#21262d" stroke-width="1"/>
+      <text x="0" y="380" class="text">
+        <tspan class="summary">✖ 3 findings (2 high, 1 medium); analysis complete.</tspan>
+        <tspan class="dim">  [Exit code: </tspan><tspan class="exit-code">2</tspan><tspan class="dim">]</tspan>
+      </text>
+    </g>
+  </g>
+</svg>
