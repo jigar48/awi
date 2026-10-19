@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { timeNanoseconds } from './timestamps.js';
 import { traceSchema } from '../adapters/index.js';
 import { resolveConfig } from '../config/index.js';
 import { AwiError, LIMITS, redact, validateValue } from '../security/index.js';
@@ -23,23 +25,62 @@ export function analyze(
   showContent = false,
 ): Report {
   const config = resolveConfig(configInput);
+  validateValue(traces, true);
+  if (!Array.isArray(traces) || traces.length > LIMITS.traces)
+    throw new AwiError('Invalid or oversized trace collection');
+  const analysisTraceSchema = traceSchema.extend({
+    operations: z
+      .array(
+        traceSchema.shape.operations.element.extend({
+          source: z
+            .strictObject({
+              format: z.enum(['awi', 'otel']),
+              index: z
+                .number()
+                .int()
+                .nonnegative()
+                .max(Number.MAX_SAFE_INTEGER),
+            })
+            .optional(),
+        }),
+      )
+      .max(LIMITS.spans),
+  });
+  const validated: Trace[] = [];
+  let total = 0;
   for (const trace of traces) {
-    const result = traceSchema.safeParse({
+    if (!trace || !Array.isArray(trace.operations))
+      throw new AwiError('Invalid canonical trace supplied to analysis');
+    total += trace.operations.length;
+    if (total > LIMITS.spans)
+      throw new AwiError('Maximum total span count exceeded');
+    const result = analysisTraceSchema.safeParse({
       ...trace,
-      operations: trace.operations.map((op) => {
-        return Object.fromEntries(
-          Object.entries(op).filter(
-            ([key, value]) => key !== 'source' && value !== undefined,
-          ),
-        );
-      }),
+      operations: trace.operations.map((op) =>
+        op && typeof op === 'object'
+          ? Object.fromEntries(
+              Object.entries(op).filter(([, value]) => value !== undefined),
+            )
+          : op,
+      ),
     });
     if (!result.success)
       throw new AwiError('Invalid canonical trace supplied to analysis');
+    // Known optional fields may be explicitly undefined in native TypeScript callers.
+    if (result.data.metadata === undefined) delete result.data.metadata;
+    for (const op of result.data.operations) {
+      if (op.error)
+        op.error = Object.fromEntries(
+          Object.entries(op.error).filter(([, value]) => value !== undefined),
+        );
+      if (op.usage)
+        op.usage = Object.fromEntries(
+          Object.entries(op.usage).filter(([, value]) => value !== undefined),
+        );
+    }
     validateValue(result.data);
+    validated.push(result.data);
   }
-  if (traces.reduce((n, t) => n + t.operations.length, 0) > LIMITS.spans)
-    throw new AwiError('Maximum total span count exceeded');
   const report: Report = {
     version: 1,
     fingerprintVersion: 'awi-sha256-v1',
@@ -49,9 +90,9 @@ export function analyze(
     warnings: [],
   };
   const grouped = new Map<string, Trace>();
-  for (const t of traces) {
+  for (const t of validated) {
     const existing = grouped.get(t.traceId);
-    if (existing) existing.operations.push(...t.operations);
+    if (existing) for (const op of t.operations) existing.operations.push(op);
     else grouped.set(t.traceId, { ...t, operations: [...t.operations] });
   }
   let capped = false;
@@ -93,13 +134,14 @@ export function analyze(
   for (const trace of [...grouped.values()].sort((a, b) =>
     a.traceId < b.traceId ? -1 : a.traceId > b.traceId ? 1 : 0,
   )) {
+    trace.operations.sort((a, b) => compare(a.id, b.id));
     const normalized = normalize(trace);
     report.warnings.push(...normalized.warnings);
     const starts = trace.operations.flatMap((o) =>
-        o.startTime ? [Date.parse(o.startTime)] : [],
+        o.startTime ? [timeNanoseconds(o.startTime)] : [],
       ),
       ends = trace.operations.flatMap((o) =>
-        o.endTime ? [Date.parse(o.endTime)] : [],
+        o.endTime ? [timeNanoseconds(o.endTime)] : [],
       );
     const leaves = trace.operations.filter(
       (o) => !normalized.children.has(o.id),
@@ -126,7 +168,13 @@ export function analyze(
       ...(starts.length === trace.operations.length &&
       ends.length === trace.operations.length &&
       starts.length
-        ? { durationMs: Math.max(...ends) - Math.min(...starts) }
+        ? {
+            durationMs:
+              Number(
+                ends.reduce((a, b) => (a > b ? a : b)) -
+                  starts.reduce((a, b) => (a < b ? a : b)),
+              ) / 1000000,
+          }
         : {}),
       ...(Object.keys(usage).length ? { usage } : {}),
     });
@@ -138,10 +186,16 @@ export function analyze(
       report.warnings.push(
         'Tool calls without recorded arguments excluded from identity-based rules.',
       );
+    if (
+      trace.operations.some((o) => o.type === 'tool' && !toolIdentityKnown(o))
+    )
+      report.warnings.push(
+        'Tool calls without recorded tool identity excluded from identity-based rules.',
+      );
     const before = report.findings.length;
     const fps = new Map(
       trace.operations
-        .filter((o) => o.type === 'tool')
+        .filter((o) => o.type === 'tool' && toolIdentityKnown(o))
         .map((o) => [o.id, fingerprint(o, config.fingerprint.ignorePaths)]),
     );
     for (const siblings of normalized.children.values()) {
@@ -150,18 +204,32 @@ export function analyze(
           (o) =>
             !o.startTime ||
             !o.endTime ||
-            Date.parse(o.endTime) <= Date.parse(o.startTime),
+            timeNanoseconds(o.endTime) <= timeNanoseconds(o.startTime),
         )
       )
         report.warnings.push(
           'Sibling groups with missing or zero-duration timing excluded from sequence rules; recorded order does not establish sequential execution.',
         );
-      for (const run of sequentialRuns(siblings)) {
-        // Generic/model spans interrupt tool sequences; no flattening across parents.
+      const runs = sequentialRuns(siblings);
+      if (
+        runs.flat().length < siblings.length &&
+        siblings.every(
+          (o) =>
+            o.startTime &&
+            o.endTime &&
+            timeNanoseconds(o.endTime) > timeNanoseconds(o.startTime),
+        )
+      )
+        report.warnings.push(
+          'Overlapping sibling operations excluded from sequence rules.',
+        );
+      for (const run of runs) {
+        // Project known tool calls; non-tool spans still constrain timing and parent context.
         let segment: Operation[] = [];
         const segments: Operation[][] = [];
         for (const op of run) {
-          if (op.type === 'tool' && op.arguments !== undefined)
+          if (op.type !== 'tool') continue;
+          if (op.arguments !== undefined && toolIdentityKnown(op))
             segment.push(op);
           else if (segment.length) {
             segments.push(segment);
@@ -172,9 +240,16 @@ export function analyze(
         for (const tools of segments) {
           const groups = new Map<string, Operation[]>();
           // A bounded 100-operation window prevents distant repetitions accumulating forever.
-          for (let base = 0; base < tools.length; base += 100) {
+          for (
+            let base = 0;
+            base < tools.length;
+            base += LIMITS.repetitionWindow
+          ) {
             groups.clear();
-            for (const op of tools.slice(base, base + 100)) {
+            for (const op of tools.slice(
+              base,
+              base + LIMITS.repetitionWindow,
+            )) {
               const fp = fps.get(op.id)!;
               const group = groups.get(fp) ?? [];
               group.push(op);
@@ -185,8 +260,7 @@ export function analyze(
               for (const op of group)
                 if (
                   op.status === 'error' &&
-                  (op.error?.code !== undefined ||
-                    op.error?.message !== undefined)
+                  (!!op.error?.code?.trim() || !!op.error?.message?.trim())
                 ) {
                   const key = hash(op.error);
                   const bucket = failures.get(key) ?? [];
@@ -231,9 +305,10 @@ export function analyze(
                   let end = cursor + 1;
                   while (
                     end < group.length &&
-                    Date.parse(group[end]!.startTime!) -
-                      Date.parse(first.startTime!) <=
-                      config.rules.AWI004.windowSeconds * 1000
+                    group[end - 1]!.status === 'error' &&
+                    timeNanoseconds(group[end]!.startTime!) -
+                      timeNanoseconds(first.startTime!) <=
+                      BigInt(config.rules.AWI004.windowSeconds) * 1000000000n
                   )
                     end++;
                   const attempts = group.slice(cursor, end);
@@ -367,6 +442,13 @@ export function analyze(
       compare(a.operationIds.join('\0'), b.operationIds.join('\0')),
   );
   report.warnings = [...new Set(report.warnings)].sort();
+  try {
+    validateValue(report);
+  } catch (error) {
+    if (error instanceof AwiError)
+      throw new AwiError('Report exceeds resource limits');
+    throw error;
+  }
   if (showContent)
     report.content = [...grouped.values()]
       .sort((a, b) => compare(a.traceId, b.traceId))
@@ -378,4 +460,12 @@ export function analyze(
 }
 function compare(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
+}
+
+function toolIdentityKnown(op: Operation): boolean {
+  return (
+    op.source?.format !== 'otel' ||
+    !!op.toolName ||
+    op.metadata?.['awi.operation_name_recorded'] !== false
+  );
 }

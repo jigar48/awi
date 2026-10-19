@@ -1,16 +1,17 @@
 import { z } from 'zod';
-import { AwiError, validateValue } from '../security/index.js';
+import { AwiError, LIMITS, validateValue } from '../security/index.js';
 const positive = z.number().int().min(1);
-const repeat = z.strictObject({
-  enabled: z.boolean().default(true),
-  threshold: positive.min(2).max(1000).default(4),
-});
+const repeat = (threshold: number) =>
+  z.strictObject({
+    enabled: z.boolean().default(true),
+    threshold: positive.min(2).max(LIMITS.repetitionWindow).default(threshold),
+  });
 export const configSchema = z.strictObject({
   version: z.literal(1).default(1),
   rules: z
     .strictObject({
-      AWI001: repeat.default({ enabled: true, threshold: 4 }),
-      AWI002: repeat.default({ enabled: true, threshold: 3 }),
+      AWI001: repeat(4).default({ enabled: true, threshold: 4 }),
+      AWI002: repeat(3).default({ enabled: true, threshold: 3 }),
       AWI003: z
         .strictObject({
           enabled: z.boolean().default(true),
@@ -21,7 +22,7 @@ export const configSchema = z.strictObject({
       AWI004: z
         .strictObject({
           enabled: z.boolean().default(true),
-          threshold: positive.min(2).max(1000).default(5),
+          threshold: positive.min(2).max(LIMITS.repetitionWindow).default(5),
           windowSeconds: positive.max(3600).default(30),
         })
         .default({ enabled: true, threshold: 5, windowSeconds: 30 }),
@@ -53,6 +54,7 @@ export const configSchema = z.strictObject({
             .regex(/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/)
             .refine(
               (p) =>
+                p.split('.').length <= LIMITS.depth &&
                 !p
                   .split('.')
                   .some((k) =>

@@ -4,7 +4,7 @@
 
 Summary fields: traceId, operations, toolCalls, maxDepth, optional durationMs and recorded leaf usage. Unknown resources stay absent. Finding fields: ruleId, severity, confidence, title, description, explanation, remediation, traceId, operationIds, structured evidence. References contain operationId and adapter source format/index when available. traceId + operationId is authoritative across merged files; source index preserves adapter recorded order, not causal order. AWI005 is trace-wide with no individual operation list.
 
-Findings sort by descending severity, trace ID, rule ID, then operation ID list using lexical comparison. Warnings deduplicate and sort. CLI filesystem inputs enumerate deterministically. Reordering canonical operations retains changed source indices: recorded order is evidence, not erased.
+Findings sort by descending severity, trace ID, rule ID, then operation ID list using lexical comparison. Warnings deduplicate and sort. CLI filesystem inputs enumerate deterministically. Operations and resource evidence use stable ID ordering after ingestion; timing rules use exact timestamps. Adapter source indices retain recorded order, so ingesting a reordered raw export changes those evidence indices deliberately. Direct-library trace fragments produce the same findings regardless of fragment order.
 
 ```json
 {

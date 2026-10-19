@@ -23,7 +23,7 @@
               "default": 4,
               "type": "integer",
               "minimum": 2,
-              "maximum": 1000
+              "maximum": 100
             }
           },
           "required": ["enabled", "threshold"],
@@ -35,10 +35,10 @@
           "properties": {
             "enabled": { "default": true, "type": "boolean" },
             "threshold": {
-              "default": 4,
+              "default": 3,
               "type": "integer",
               "minimum": 2,
-              "maximum": 1000
+              "maximum": 100
             }
           },
           "required": ["enabled", "threshold"],
@@ -78,7 +78,7 @@
               "default": 5,
               "type": "integer",
               "minimum": 2,
-              "maximum": 1000
+              "maximum": 100
             },
             "windowSeconds": {
               "default": 30,

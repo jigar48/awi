@@ -1,7 +1,8 @@
+import { validTime } from '../core/timestamps.js';
 import { z } from 'zod';
 import { AwiError, LIMITS, validateValue } from '../security/index.js';
 import type { Operation, Trace } from '../core/models.js';
-const time = z.string().datetime({ offset: true });
+const time = z.string().datetime({ offset: true }).refine(validTime);
 const count = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 const operation = z.strictObject({
   id: z.string().min(1),
@@ -54,46 +55,120 @@ function string(v: unknown): string | undefined {
 }
 function anyValue(v: unknown): unknown {
   const r = record(v);
-  if ('stringValue' in r) return r.stringValue;
-  if ('boolValue' in r) return r.boolValue;
-  if ('intValue' in r) {
-    const n = Number(r.intValue);
-    return Number.isSafeInteger(n) ? n : String(r.intValue);
+  const fields = [
+    'stringValue',
+    'boolValue',
+    'intValue',
+    'doubleValue',
+    'bytesValue',
+    'arrayValue',
+    'kvlistValue',
+  ].filter((key) => key in r);
+  if (!fields.length) return undefined;
+  if (fields.length !== 1) throw new AwiError('Invalid OTLP AnyValue');
+  const field = fields[0]!;
+  const value = r[field];
+  if (field === 'stringValue' || field === 'bytesValue') {
+    if (typeof value !== 'string')
+      throw new AwiError('Invalid OTLP string value');
+    return value;
   }
-  if ('doubleValue' in r) return r.doubleValue;
-  if ('bytesValue' in r) return r.bytesValue;
-  if ('arrayValue' in r)
-    return list(record(r.arrayValue).values ?? []).map(anyValue);
-  if ('kvlistValue' in r) return attributes(record(r.kvlistValue).values);
-  return null;
+  if (field === 'boolValue') {
+    if (typeof value !== 'boolean')
+      throw new AwiError('Invalid OTLP boolean value');
+    return value;
+  }
+  if (field === 'doubleValue') {
+    if (typeof value !== 'number' || !Number.isFinite(value))
+      throw new AwiError('Invalid OTLP double value');
+    return value;
+  }
+  if (field === 'intValue') {
+    if (
+      (typeof value !== 'string' || !/^[-]?\d{1,19}$/.test(value)) &&
+      (typeof value !== 'number' || !Number.isSafeInteger(value))
+    )
+      throw new AwiError('Invalid OTLP integer value');
+    const integer = BigInt(value as string | number);
+    if (integer < -9223372036854775808n || integer > 9223372036854775807n)
+      throw new AwiError('OTLP integer out of range');
+    const number = Number(integer);
+    return Number.isSafeInteger(number) ? number : String(value);
+  }
+  if (value === null || typeof value !== 'object' || Array.isArray(value))
+    throw new AwiError('Invalid OTLP structured value');
+  if (field === 'arrayValue') {
+    const items = list(record(value).values ?? []).map(anyValue);
+    return items.some((item) => item === undefined) ? undefined : items;
+  }
+  return attributes(record(value).values, true);
 }
-function attributes(v: unknown): Record<string, unknown> {
+function attributes(v: unknown): Record<string, unknown>;
+function attributes(
+  v: unknown,
+  complete: true,
+): Record<string, unknown> | undefined;
+function attributes(
+  v: unknown,
+  complete = false,
+): Record<string, unknown> | undefined {
+  const entries: [string, unknown][] = [];
+  for (const attribute of list(v ?? [])) {
+    const raw = record(attribute);
+    if (typeof raw.key !== 'string')
+      throw new AwiError('Invalid OTLP attribute key');
+    const value = anyValue(raw.value);
+    if (value === undefined && complete) return undefined;
+    entries.push([raw.key, value]);
+  }
   return Object.fromEntries(
-    list(v ?? []).map((a) => {
-      const r = record(a);
-      if (typeof r.key !== 'string')
-        throw new AwiError('Invalid OTLP attribute key');
-      return [r.key, anyValue(r.value)];
-    }),
+    [...new Map(entries)].filter(([, value]) => value !== undefined),
+  );
+}
+function attributeEncoding(
+  values: unknown,
+  key: string,
+): Record<string, unknown> {
+  const attribute = list(values ?? []).findLast(
+    (item) => record(item).key === key,
+  );
+  return record(record(attribute).value);
+}
+function textAttribute(values: unknown, key: string): string | undefined {
+  return string(attributeEncoding(values, key).stringValue);
+}
+function hasBinaryValue(value: unknown): boolean {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    ('bytesValue' in value || Object.values(value).some(hasBinaryValue))
   );
 }
 function timestamp(v: unknown): string | undefined {
   if (v === undefined || v === '0' || v === 0) return undefined;
   if (
-    (typeof v !== 'string' || !/^\d+$/.test(v)) &&
+    (typeof v !== 'string' || !/^\d{1,20}$/.test(v)) &&
     (typeof v !== 'number' || !Number.isSafeInteger(v))
   )
     throw new AwiError('Invalid OTLP nanosecond timestamp');
-  const ms = Number(BigInt(v as string | number) / 1000000n);
-  if (!Number.isSafeInteger(ms) || ms < 0 || ms > 8640000000000000)
+  const ns = BigInt(v as string | number);
+  if (ns === 0n) return undefined;
+  if (ns < 0n || ns > 18446744073709551615n)
     throw new AwiError('OTLP timestamp out of range');
-  return new Date(ms).toISOString();
+  const iso = new Date(Number(ns / 1000000n)).toISOString();
+  return ns % 1000000n === 0n
+    ? iso
+    : iso.replace(
+        /\.\d{3}Z$/,
+        '.' + (ns % 1000000000n).toString().padStart(9, '0') + 'Z',
+      );
 }
 function otel(value: unknown): Trace[] {
   const grouped = new Map<string, Trace>();
   let total = 0;
   for (const resource of list(record(value).resourceSpans)) {
     const r = record(resource);
+    const resourceAttributes = attributes(record(r.resource).attributes);
     for (const scope of list(r.scopeSpans ?? []))
       for (const raw of list(record(scope).spans ?? [])) {
         if (++total > LIMITS.spans)
@@ -111,8 +186,10 @@ function otel(value: unknown): Trace[] {
         )
           throw new AwiError('Invalid OTLP trace/span identity');
         const a = attributes(s.attributes);
-        const kind = a['gen_ai.operation.name'];
-        const tool = string(a['gen_ai.tool.name']) ?? string(a['tool.name']);
+        const kind = textAttribute(s.attributes, 'gen_ai.operation.name');
+        const tool =
+          textAttribute(s.attributes, 'gen_ai.tool.name') ??
+          textAttribute(s.attributes, 'tool.name');
         const type: Operation['type'] =
           tool || kind === 'execute_tool'
             ? 'tool'
@@ -123,15 +200,24 @@ function otel(value: unknown): Trace[] {
                     'generate_content',
                     'text_completion',
                     'embeddings',
-                  ].includes(String(kind))
+                  ].includes(typeof kind === 'string' ? kind : '')
                 ? 'model'
                 : kind === 'workflow'
                   ? 'workflow'
                   : 'generic';
-        const status = record(s.status).code;
+        const statusRecord = record(s.status);
+        const status = statusRecord.code;
         const events = list(s.events ?? []).map(record);
         const exception = events.find((e) => e.name === 'exception');
-        const ea = exception ? attributes(exception.attributes) : {};
+        if (exception) attributes(exception.attributes);
+        const exceptionType = textAttribute(
+            exception?.attributes,
+            'exception.type',
+          ),
+          exceptionMessage = textAttribute(
+            exception?.attributes,
+            'exception.message',
+          );
         const usage: NonNullable<Operation['usage']> = {};
         for (const [target, key] of [
           ['inputTokens', 'gen_ai.usage.input_tokens'],
@@ -142,7 +228,11 @@ function otel(value: unknown): Trace[] {
           if (typeof v === 'number' && Number.isSafeInteger(v) && v >= 0)
             usage[target] = v;
         }
-        let args: unknown = a['gen_ai.tool.call.arguments'];
+        let args: unknown = hasBinaryValue(
+          attributeEncoding(s.attributes, 'gen_ai.tool.call.arguments'),
+        )
+          ? undefined
+          : a['gen_ai.tool.call.arguments'];
         if (typeof args === 'string') {
           try {
             args = JSON.parse(args);
@@ -150,13 +240,17 @@ function otel(value: unknown): Trace[] {
             /* Preserve recorded string. */
           }
         }
+        const startTime = timestamp(s.startTimeUnixNano),
+          endTime = timestamp(s.endTimeUnixNano);
         const parent = string(s.parentSpanId);
+        if (s.parentSpanId !== undefined && typeof s.parentSpanId !== 'string')
+          throw new AwiError('Invalid OTLP parent identity');
         if (parent && !/^[a-fA-F0-9]{16}$/.test(parent))
           throw new AwiError('Invalid OTLP parent identity');
         const op: Operation = {
           id: id.toLowerCase(),
           type,
-          name: string(s.name) ?? 'unnamed',
+          name: string(s.name) || 'unnamed',
           status:
             status === 2 || status === 'STATUS_CODE_ERROR'
               ? 'error'
@@ -167,35 +261,36 @@ function otel(value: unknown): Trace[] {
             ? { parentId: parent.toLowerCase() }
             : {}),
           ...(tool ? { toolName: tool } : {}),
-          ...(s.startTimeUnixNano
-            ? { startTime: timestamp(s.startTimeUnixNano) }
-            : {}),
-          ...(s.endTimeUnixNano
-            ? { endTime: timestamp(s.endTimeUnixNano) }
-            : {}),
+          ...(startTime ? { startTime } : {}),
+          ...(endTime ? { endTime } : {}),
           ...(args !== undefined ? { arguments: args } : {}),
           ...(Object.keys(usage).length ? { usage } : {}),
-          ...(exception
+          ...(exception ||
+          ((status === 2 || status === 'STATUS_CODE_ERROR') &&
+            typeof statusRecord.message === 'string')
             ? {
                 error: {
-                  ...(typeof ea['exception.type'] === 'string'
-                    ? { code: ea['exception.type'] }
+                  ...(exceptionType !== undefined
+                    ? { code: exceptionType }
                     : {}),
-                  ...(typeof ea['exception.message'] === 'string'
-                    ? { message: ea['exception.message'] }
-                    : {}),
+                  ...(exceptionMessage !== undefined
+                    ? { message: exceptionMessage }
+                    : typeof statusRecord.message === 'string'
+                      ? { message: statusRecord.message }
+                      : {}),
                 },
               }
             : {}),
           metadata: {
+            'awi.operation_name_recorded':
+              typeof s.name === 'string' && s.name.length > 0,
             attributes: a,
-            resource: attributes(record(r.resource).attributes),
+            resource: resourceAttributes,
             scope: record(scope).scope ?? {},
             events: s.events ?? [],
           },
           source: { format: 'otel', index: total - 1 },
         };
-        validateValue(op.metadata);
         if (args !== undefined) validateValue(args);
         const key = traceId.toLowerCase();
         if (!grouped.has(key))
@@ -203,7 +298,9 @@ function otel(value: unknown): Trace[] {
         grouped.get(key)!.operations.push(op);
       }
   }
-  return [...grouped.values()];
+  const result = [...grouped.values()];
+  validateValue(result);
+  return result;
 }
 export function ingest(
   value: unknown,
@@ -219,14 +316,23 @@ export function ingest(
     format = isOtel ? 'otel' : 'awi';
   }
   if (format === 'otel') return otel(value);
+  if (format !== 'awi') throw new AwiError('Unsupported input format');
   const collection =
     'traces' in root
       ? z
-          .strictObject({ version: z.literal(1), traces: z.array(traceSchema) })
+          .strictObject({
+            version: z.literal(1),
+            traces: z.array(traceSchema).max(LIMITS.traces),
+          })
           .safeParse(value)
       : null;
   if (collection) {
     if (!collection.success) throw new AwiError('Invalid AWI trace collection');
+    if (
+      collection.data.traces.reduce((n, t) => n + t.operations.length, 0) >
+      LIMITS.spans
+    )
+      throw new AwiError('Maximum total span count exceeded');
     return collection.data.traces.map((t) => ({
       ...t,
       operations: t.operations.map((op, index) => ({

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
+import { constants } from 'node:fs';
 import { Command, Option } from 'commander';
 import { open, lstat, opendir, realpath, link, unlink } from 'node:fs/promises';
-import { resolve, join, dirname, basename } from 'node:path';
+import { resolve, join, dirname, parse as parsePath } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { analyze, severityRank } from '../core/analysis.js';
 import { ingest } from '../adapters/index.js';
@@ -9,27 +10,65 @@ import { parseJson, AwiError, LIMITS, safeText } from '../security/index.js';
 import { resolveConfig } from '../config/index.js';
 import { humanReport, jsonReport } from '../core/reporting.js';
 import type { Trace, Severity } from '../core/models.js';
-async function readJson(path: string): Promise<unknown> {
+async function noSymlinkComponents(path: string): Promise<void> {
+  const absolute = resolve(path),
+    root = parsePath(absolute).root;
+  const parts: string[] = [];
+  let current = absolute;
+  while (current !== root) {
+    parts.push(current);
+    current = dirname(current);
+  }
+  for (const part of parts.reverse())
+    if ((await lstat(part)).isSymbolicLink())
+      throw new AwiError('Symlinks are not supported in paths');
+}
+async function readJson(
+  path: string,
+  maxBytes: number = LIMITS.fileBytes,
+): Promise<{ value: unknown; bytes: number }> {
+  await noSymlinkComponents(path);
   const stat = await lstat(path);
   if (!stat.isFile() || stat.isSymbolicLink())
     throw new AwiError('Input must be a regular non-symlink file');
-  if (stat.size > LIMITS.fileBytes)
-    throw new AwiError('Input exceeds maximum file size');
-  const file = await open(path, 'r');
+  const limit = Math.min(LIMITS.fileBytes, maxBytes);
+  if (stat.size > limit)
+    throw new AwiError('Input exceeds maximum allowed file or aggregate size');
+  const file = await open(
+    path,
+    constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0),
+  );
   try {
     const after = await file.stat();
-    if (!after.isFile() || after.size > LIMITS.fileBytes)
-      throw new AwiError('Invalid input file');
-    const buffer = Buffer.alloc(LIMITS.fileBytes + 1);
+    if (
+      !after.isFile() ||
+      after.dev !== stat.dev ||
+      after.ino !== stat.ino ||
+      after.size > limit
+    )
+      throw new AwiError('Invalid or changed input file');
+    const chunks: Buffer[] = [];
     let size = 0;
-    while (size < buffer.length) {
-      const result = await file.read(buffer, size, buffer.length - size, null);
+    while (size <= limit) {
+      const chunk = Buffer.alloc(Math.min(65536, limit + 1 - size));
+      const result = await file.read(chunk, 0, chunk.length, null);
       if (!result.bytesRead) break;
       size += result.bytesRead;
+      if (size > limit)
+        throw new AwiError(
+          'Input exceeds maximum allowed file or aggregate size',
+        );
+      chunks.push(chunk.subarray(0, result.bytesRead));
     }
-    if (size > LIMITS.fileBytes)
-      throw new AwiError('Input exceeds maximum file size');
-    return parseJson(buffer.subarray(0, size).toString('utf8'));
+    let text: string;
+    try {
+      text = new TextDecoder('utf-8', { fatal: true }).decode(
+        Buffer.concat(chunks, size),
+      );
+    } catch {
+      throw new AwiError('Input is not valid UTF-8');
+    }
+    return { value: parseJson(text), bytes: size };
   } finally {
     await file.close();
   }
@@ -44,12 +83,14 @@ async function collect(paths: string[]): Promise<string[]> {
     if (stat.isSymbolicLink()) throw new AwiError('Symlinks are not supported');
     if (stat.isDirectory()) {
       const directory = await opendir(path);
-      let found = false;
+      const names: string[] = [];
       for await (const entry of directory) {
-        found = true;
-        await visit(join(path, entry.name), depth + 1);
+        if (entries + names.length >= 2048)
+          throw new AwiError('Directory traversal limit exceeded');
+        names.push(entry.name);
       }
-      if (!found) throw new AwiError('Empty input directory');
+      if (!names.length) throw new AwiError('Empty input directory');
+      for (const name of names.sort()) await visit(join(path, name), depth + 1);
     } else {
       if (!stat.isFile() || !path.toLowerCase().endsWith('.json'))
         throw new AwiError('Only regular .json input files are supported');
@@ -58,15 +99,16 @@ async function collect(paths: string[]): Promise<string[]> {
         throw new AwiError('Maximum input file count exceeded');
     }
   }
-  for (const path of paths) await visit(resolve(path), 0);
+  for (const path of paths) {
+    await noSymlinkComponents(path);
+    await visit(resolve(path), 0);
+  }
   return [...files].sort();
 }
 async function writeReport(path: string, body: string): Promise<void> {
   const target = resolve(path),
-    temporary = join(
-      dirname(target),
-      '.' + basename(target) + '.' + randomUUID() + '.tmp',
-    );
+    temporary = join(dirname(target), '.awi-report-' + randomUUID() + '.tmp');
+  await noSymlinkComponents(dirname(target));
   try {
     const file = await open(temporary, 'wx', 0o600);
     try {
@@ -81,6 +123,13 @@ async function writeReport(path: string, body: string): Promise<void> {
     await unlink(temporary).catch(() => {});
   }
 }
+process.stderr.on('error', () => {
+  process.exitCode = 1;
+});
+process.stdout.on('error', () => {
+  process.exitCode = 1;
+  process.stderr.write('awi: Unable to write report output\n');
+});
 const program = new Command()
   .configureOutput({
     writeErr: (text) => {
@@ -131,20 +180,21 @@ program
     ) => {
       const files = await collect(paths);
       const config = resolveConfig(
-        options.config ? await readJson(resolve(options.config)) : {},
+        options.config ? (await readJson(resolve(options.config))).value : {},
       );
       const traces: Trace[] = [];
       let count = 0;
       let totalBytes = 0;
       for (const path of files) {
-        totalBytes += (await lstat(path)).size;
-        if (totalBytes > 64 * 1024 * 1024)
-          throw new AwiError('Maximum aggregate input size exceeded');
-        const imported = ingest(await readJson(path), options.inputFormat);
+        const input = await readJson(path, LIMITS.aggregateBytes - totalBytes);
+        totalBytes += input.bytes;
+        const imported = ingest(input.value, options.inputFormat);
         count += imported.reduce((n, t) => n + t.operations.length, 0);
         if (count > LIMITS.spans)
           throw new AwiError('Maximum total span count exceeded');
-        traces.push(...imported);
+        if (traces.length + imported.length > LIMITS.traces)
+          throw new AwiError('Maximum trace count exceeded');
+        for (const trace of imported) traces.push(trace);
       }
       if (!traces.length) throw new AwiError('No traces found');
       const report = analyze(traces, config, options.showContent);

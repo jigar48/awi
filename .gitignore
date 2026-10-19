@@ -5,3 +5,4 @@ coverage/
 *.tmp
 .package-smoke/
 .awi-smoke-*/
+.awi-audit/

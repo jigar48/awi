@@ -5,6 +5,7 @@ export default tseslint.config(
       'dist/**',
       'node_modules/**',
       'coverage/**',
+      '.awi-audit/**',
       '.package-smoke/**',
       '.awi-smoke-*/**',
     ],

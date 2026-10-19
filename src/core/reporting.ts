@@ -17,12 +17,13 @@ export function humanReport(
     );
   for (const f of report.findings)
     lines.push(
-      `\n${paint('[' + f.severity.toUpperCase() + ']', f.severity)} ${f.ruleId} ${f.title} (${f.confidence} evidence)`,
+      `\n${paint('[' + f.severity.toUpperCase() + ']', f.severity)} ${safeText(f.ruleId)} ${safeText(f.title)} (${safeText(f.confidence)} evidence)`,
       `  Trace: ${safeText(f.traceId)}; operations: ${f.operationIds.map(safeText).join(', ') || 'trace-wide'}`,
-      `  ${f.explanation}`,
+      `  ${safeText(f.explanation)}`,
       `  Evidence: ${safeText(JSON.stringify(f.evidence))}`,
     );
-  for (const warning of report.warnings) lines.push('Warning: ' + warning);
+  for (const warning of report.warnings)
+    lines.push('Warning: ' + safeText(warning));
   if (report.content)
     lines.push(
       'Content (opt-in, key-based redaction): ' +

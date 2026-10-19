@@ -1,3 +1,4 @@
+import { timeNanoseconds } from './timestamps.js';
 import type { Operation, Trace } from './models.js';
 import { AwiError, LIMITS } from '../security/index.js';
 export interface Normalized {
@@ -17,7 +18,7 @@ export function normalize(trace: Trace): Normalized {
     if (
       op.startTime &&
       op.endTime &&
-      Date.parse(op.endTime) < Date.parse(op.startTime)
+      timeNanoseconds(op.endTime) < timeNanoseconds(op.startTime)
     )
       throw new AwiError('End timestamp precedes start timestamp');
   }
@@ -62,32 +63,48 @@ export function sequentialRuns(ops: Operation[]): Operation[][] {
       (o) =>
         !o.startTime ||
         !o.endTime ||
-        Date.parse(o.endTime) <= Date.parse(o.startTime),
+        timeNanoseconds(o.endTime) <= timeNanoseconds(o.startTime),
     )
   )
     return [];
   const timed = ops
-    .filter((o) => o.startTime && o.endTime)
-    .sort(
-      (a, b) =>
-        Date.parse(a.startTime!) - Date.parse(b.startTime!) ||
-        (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+    .map((op) => ({
+      op,
+      start: timeNanoseconds(op.startTime!),
+      end: timeNanoseconds(op.endTime!),
+    }))
+    .sort((a, b) =>
+      a.start < b.start
+        ? -1
+        : a.start > b.start
+          ? 1
+          : a.op.id < b.op.id
+            ? -1
+            : a.op.id > b.op.id
+              ? 1
+              : 0,
     );
   const runs: Operation[][] = [];
-  let run: Operation[] = [];
-  let end = -Infinity;
-  for (const op of timed) {
-    const start = Date.parse(op.startTime!);
-    const finish = Date.parse(op.endTime!);
-    if (start < end) {
-      if (run.length) runs.push(run);
+  let run: typeof timed = [];
+  let overlapEnd: bigint | undefined;
+  for (const item of timed) {
+    if (overlapEnd !== undefined) {
+      if (item.start < overlapEnd) {
+        if (item.end > overlapEnd) overlapEnd = item.end;
+        continue;
+      }
+      overlapEnd = undefined;
+    }
+    const previous = run.at(-1);
+    if (previous && item.start < previous.end) {
+      run.pop();
+      if (run.length) runs.push(run.map((value) => value.op));
       run = [];
-      end = Math.max(end, finish);
+      overlapEnd = previous.end > item.end ? previous.end : item.end;
       continue;
     }
-    run.push(op);
-    end = finish;
+    run.push(item);
   }
-  if (run.length) runs.push(run);
+  if (run.length) runs.push(run.map((value) => value.op));
   return runs;
 }

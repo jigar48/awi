@@ -10,7 +10,7 @@
     "url": "https://github.com/jigar48/awi.git"
   },
   "engines": {
-    "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
+    "node": "^22.18.0 || ^24.11.0 || ^26.0.0"
   },
   "packageManager": "pnpm@11.25.0",
   "bin": {
@@ -30,7 +30,11 @@
     "examples",
     "README.md",
     "LICENSE",
-    "awi.config.example.json"
+    "awi.config.example.json",
+    "CHANGELOG.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md"
   ],
   "scripts": {
     "build": "tsup",

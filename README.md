@@ -8,7 +8,7 @@ Findings are heuristics, not proof of bugs or waste. Repeated polling and intent
 
 ## Run from source
 
-Use Node **22.18+ (22.x), 24.11+ (24.x), or 26+** and pnpm **11.25.0**.
+Use Node **22.18+ (22.x), 24.11+ (24.x), or 26.x** and pnpm **11.25.0**.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -54,7 +54,7 @@ const report = analyze(traces, { rules: { AWI001: { threshold: 5 } } });
 console.log(report.findings);
 ```
 
-Library and CLI share validators, limits, detectors, and report contracts. The library does no filesystem access or networking. Optional properties represent unknown values; they are never silently replaced with zero.
+Library and CLI share validators, limits, detectors, and report contracts. Use ingest/analyze for resource and graph checks; exported structural schemas alone are not a security boundary. The library does no filesystem access or networking. Optional properties represent unknown values; they are never silently replaced with zero.
 
 ## Documentation
 
@@ -68,6 +68,7 @@ Library and CLI share validators, limits, detectors, and report contracts. The l
 - [Report contract](docs/report-schema.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Limitations](docs/limitations.md)
+- [Pre-release audit](docs/audit.md)
 - [Verification record](docs/verification.md)
 - [Contributing](CONTRIBUTING.md)
 

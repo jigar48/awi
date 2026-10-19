@@ -1,8 +1,23 @@
 import { z } from 'zod';
 const usage = z.strictObject({
-  inputTokens: z.number().nonnegative().optional(),
-  outputTokens: z.number().nonnegative().optional(),
-  totalTokens: z.number().nonnegative().optional(),
+  inputTokens: z
+    .number()
+    .int()
+    .nonnegative()
+    .max(Number.MAX_SAFE_INTEGER)
+    .optional(),
+  outputTokens: z
+    .number()
+    .int()
+    .nonnegative()
+    .max(Number.MAX_SAFE_INTEGER)
+    .optional(),
+  totalTokens: z
+    .number()
+    .int()
+    .nonnegative()
+    .max(Number.MAX_SAFE_INTEGER)
+    .optional(),
 });
 export const reportSchema = z.strictObject({
   version: z.literal(1),
