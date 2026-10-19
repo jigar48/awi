@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "rules": {
+    "AWI001": {
+      "enabled": true,
+      "threshold": 4
+    },
+    "AWI002": {
+      "enabled": true,
+      "threshold": 3
+    },
+    "AWI003": {
+      "enabled": true,
+      "minRepetitions": 3,
+      "maxCycleLength": 6
+    },
+    "AWI004": {
+      "enabled": true,
+      "threshold": 5,
+      "windowSeconds": 30
+    },
+    "AWI005": {
+      "enabled": true,
+      "maxOperations": 100,
+      "maxDepth": 20
+    },
+    "AWI006": {
+      "enabled": true
+    }
+  },
+  "fingerprint": {
+    "ignorePaths": []
+  }
+}

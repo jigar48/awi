@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "traceId": "retries",
+  "operations": [
+    {
+      "id": "op-0",
+      "type": "tool",
+      "name": "lookup",
+      "toolName": "lookup",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "error",
+      "startTime": "2026-01-01T00:00:00Z",
+      "endTime": "2026-01-01T00:00:01Z",
+      "error": {
+        "code": "UNAVAILABLE"
+      },
+      "usage": {
+        "inputTokens": 10
+      },
+      "cost": {
+        "amount": 0.001,
+        "currency": "USD"
+      }
+    },
+    {
+      "id": "op-1",
+      "type": "tool",
+      "name": "lookup",
+      "toolName": "lookup",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "error",
+      "startTime": "2026-01-01T00:00:02Z",
+      "endTime": "2026-01-01T00:00:03Z",
+      "error": {
+        "code": "UNAVAILABLE"
+      },
+      "usage": {
+        "inputTokens": 10
+      },
+      "cost": {
+        "amount": 0.001,
+        "currency": "USD"
+      }
+    },
+    {
+      "id": "op-2",
+      "type": "tool",
+      "name": "lookup",
+      "toolName": "lookup",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "error",
+      "startTime": "2026-01-01T00:00:04Z",
+      "endTime": "2026-01-01T00:00:05Z",
+      "error": {
+        "code": "UNAVAILABLE"
+      },
+      "usage": {
+        "inputTokens": 10
+      },
+      "cost": {
+        "amount": 0.001,
+        "currency": "USD"
+      }
+    },
+    {
+      "id": "op-3",
+      "type": "tool",
+      "name": "lookup",
+      "toolName": "lookup",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "error",
+      "startTime": "2026-01-01T00:00:06Z",
+      "endTime": "2026-01-01T00:00:07Z",
+      "error": {
+        "code": "UNAVAILABLE"
+      },
+      "usage": {
+        "inputTokens": 10
+      },
+      "cost": {
+        "amount": 0.001,
+        "currency": "USD"
+      }
+    },
+    {
+      "id": "op-4",
+      "type": "tool",
+      "name": "lookup",
+      "toolName": "lookup",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "error",
+      "startTime": "2026-01-01T00:00:08Z",
+      "endTime": "2026-01-01T00:00:09Z",
+      "error": {
+        "code": "UNAVAILABLE"
+      },
+      "usage": {
+        "inputTokens": 10
+      },
+      "cost": {
+        "amount": 0.001,
+        "currency": "USD"
+      }
+    }
+  ]
+}

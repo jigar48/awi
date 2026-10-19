@@ -1,0 +1,60 @@
+{
+  "name": "agent-workflow-inspector",
+  "version": "1.0.0",
+  "description": "Find loops, retries, and wasted work in AI agent traces.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Jigar Prajapati",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jigar48/awi.git"
+  },
+  "engines": {
+    "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
+  },
+  "packageManager": "pnpm@11.25.0",
+  "bin": {
+    "awi": "dist/cli/index.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "docs",
+    "examples",
+    "README.md",
+    "LICENSE",
+    "awi.config.example.json"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "prepack": "pnpm build",
+    "schemas": "pnpm build && node scripts/schemas.mjs",
+    "smoke:package": "node scripts/package-smoke.mjs"
+  },
+  "dependencies": {
+    "commander": "14.0.3",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "@types/node": "^22.19.0",
+    "tsup": "9.0.0",
+    "vitest": "5.0.5",
+    "eslint": "10.13.0",
+    "typescript-eslint": "^8.46.0",
+    "prettier": "^3.6.2"
+  }
+}

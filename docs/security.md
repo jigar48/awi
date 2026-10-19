@@ -1,0 +1,11 @@
+# Security and privacy
+
+All trace content is inert untrusted JSON. AWI never obeys embedded instructions. Analysis uses no eval, shell execution, URL fetching, telemetry, network, database or intermediate content files. Fixed limits apply to parsing, files, spans, nesting, strings, traversal, cycles and findings.
+
+Ordinary reports include trace/operation IDs, measurements, rule IDs, source indices and explanations. Raw tool names, names, arguments, results, prompts, metadata, error messages and hashes are omitted. IDs can themselves contain secrets; export opaque safe IDs. JSON output escapes terminal formatting and control characters while preserving identifiers on JSON parsing. Human output replaces Unicode controls, formatting controls and line/paragraph separators including ANSI escape and bidirectional controls. Human output colors severity only on supported interactive terminals, honors NO_COLOR and --no-color, and never relies solely on color.
+
+--show-content includes content and can expose private data. Recursive redaction replaces values by keys matching authorization, password, secret, token, API key, cookie, credential, prompt, message, output or result. It cannot recognize every secret, especially arbitrary argument strings and IDs. Review locally before sharing. AWI never transmits content. Default reports also contain sensitive workflow correlations.
+
+Parsing rejects **proto**, constructor and prototype object keys. No prototype merging occurs. Files are size-checked before parsing and reads remain bounded if files grow. CLI rejects symlink inputs/entries. This is not a filesystem sandbox against concurrent replacement of directory components: use trusted directories and OS permissions. Reports use a private adjacent temporary file, fsync and atomic exclusive hard-link publication. Existing targets are never overwritten. Ordinary failures clean up temporary files. Filesystems without hard links fail closed. Crashes may leave private .tmp files to inspect/remove locally.
+
+Errors omit raw parser content, OS filenames and stacks. Schema errors show field paths/codes. No general anonymization guarantee exists for identifiers or opt-in content. See SECURITY.md for private disclosure guidance.

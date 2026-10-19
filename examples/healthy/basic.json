@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "traceId": "healthy",
+  "operations": [
+    {
+      "id": "op-0",
+      "type": "tool",
+      "name": "lookup",
+      "toolName": "lookup",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "ok",
+      "startTime": "2026-01-01T00:00:00Z",
+      "endTime": "2026-01-01T00:00:01Z"
+    },
+    {
+      "id": "op-1",
+      "type": "tool",
+      "name": "save",
+      "toolName": "save",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "ok",
+      "startTime": "2026-01-01T00:00:02Z",
+      "endTime": "2026-01-01T00:00:03Z"
+    }
+  ]
+}

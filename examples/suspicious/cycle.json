@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "traceId": "cycle",
+  "operations": [
+    {
+      "id": "op-0",
+      "type": "tool",
+      "name": "write",
+      "toolName": "write",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "ok",
+      "startTime": "2026-01-01T00:00:00Z",
+      "endTime": "2026-01-01T00:00:01Z"
+    },
+    {
+      "id": "op-1",
+      "type": "tool",
+      "name": "read",
+      "toolName": "read",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "ok",
+      "startTime": "2026-01-01T00:00:02Z",
+      "endTime": "2026-01-01T00:00:03Z"
+    },
+    {
+      "id": "op-2",
+      "type": "tool",
+      "name": "write",
+      "toolName": "write",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "ok",
+      "startTime": "2026-01-01T00:00:04Z",
+      "endTime": "2026-01-01T00:00:05Z"
+    },
+    {
+      "id": "op-3",
+      "type": "tool",
+      "name": "read",
+      "toolName": "read",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "ok",
+      "startTime": "2026-01-01T00:00:06Z",
+      "endTime": "2026-01-01T00:00:07Z"
+    },
+    {
+      "id": "op-4",
+      "type": "tool",
+      "name": "write",
+      "toolName": "write",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "ok",
+      "startTime": "2026-01-01T00:00:08Z",
+      "endTime": "2026-01-01T00:00:09Z"
+    },
+    {
+      "id": "op-5",
+      "type": "tool",
+      "name": "read",
+      "toolName": "read",
+      "arguments": {
+        "query": "synthetic"
+      },
+      "status": "ok",
+      "startTime": "2026-01-01T00:00:10Z",
+      "endTime": "2026-01-01T00:00:11Z"
+    }
+  ]
+}

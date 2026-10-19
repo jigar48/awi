@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": { "default": 1, "type": "number", "const": 1 },
+    "rules": {
+      "default": {
+        "AWI001": { "enabled": true, "threshold": 4 },
+        "AWI002": { "enabled": true, "threshold": 3 },
+        "AWI003": { "enabled": true, "minRepetitions": 3, "maxCycleLength": 6 },
+        "AWI004": { "enabled": true, "threshold": 5, "windowSeconds": 30 },
+        "AWI005": { "enabled": true, "maxOperations": 100, "maxDepth": 20 },
+        "AWI006": { "enabled": true }
+      },
+      "type": "object",
+      "properties": {
+        "AWI001": {
+          "default": { "enabled": true, "threshold": 4 },
+          "type": "object",
+          "properties": {
+            "enabled": { "default": true, "type": "boolean" },
+            "threshold": {
+              "default": 4,
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 1000
+            }
+          },
+          "required": ["enabled", "threshold"],
+          "additionalProperties": false
+        },
+        "AWI002": {
+          "default": { "enabled": true, "threshold": 3 },
+          "type": "object",
+          "properties": {
+            "enabled": { "default": true, "type": "boolean" },
+            "threshold": {
+              "default": 4,
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 1000
+            }
+          },
+          "required": ["enabled", "threshold"],
+          "additionalProperties": false
+        },
+        "AWI003": {
+          "default": {
+            "enabled": true,
+            "minRepetitions": 3,
+            "maxCycleLength": 6
+          },
+          "type": "object",
+          "properties": {
+            "enabled": { "default": true, "type": "boolean" },
+            "minRepetitions": {
+              "default": 3,
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 100
+            },
+            "maxCycleLength": {
+              "default": 6,
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 16
+            }
+          },
+          "required": ["enabled", "minRepetitions", "maxCycleLength"],
+          "additionalProperties": false
+        },
+        "AWI004": {
+          "default": { "enabled": true, "threshold": 5, "windowSeconds": 30 },
+          "type": "object",
+          "properties": {
+            "enabled": { "default": true, "type": "boolean" },
+            "threshold": {
+              "default": 5,
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 1000
+            },
+            "windowSeconds": {
+              "default": 30,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600
+            }
+          },
+          "required": ["enabled", "threshold", "windowSeconds"],
+          "additionalProperties": false
+        },
+        "AWI005": {
+          "default": { "enabled": true, "maxOperations": 100, "maxDepth": 20 },
+          "type": "object",
+          "properties": {
+            "enabled": { "default": true, "type": "boolean" },
+            "maxOperations": {
+              "default": 100,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50000
+            },
+            "maxDepth": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          "required": ["enabled", "maxOperations", "maxDepth"],
+          "additionalProperties": false
+        },
+        "AWI006": {
+          "default": { "enabled": true },
+          "type": "object",
+          "properties": { "enabled": { "default": true, "type": "boolean" } },
+          "required": ["enabled"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["AWI001", "AWI002", "AWI003", "AWI004", "AWI005", "AWI006"],
+      "additionalProperties": false
+    },
+    "fingerprint": {
+      "default": { "ignorePaths": [] },
+      "type": "object",
+      "properties": {
+        "ignorePaths": {
+          "default": [],
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+          }
+        }
+      },
+      "required": ["ignorePaths"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["version", "rules", "fingerprint"],
+  "additionalProperties": false
+}
