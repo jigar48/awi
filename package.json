@@ -64,7 +64,8 @@
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "prepack": "pnpm build",
     "schemas": "pnpm build && node scripts/schemas.mjs",
-    "smoke:package": "node scripts/package-smoke.mjs"
+    "smoke:package": "node scripts/package-smoke.mjs",
+    "verify:quickstart": "node scripts/verify-quickstart.mjs"
   },
   "dependencies": {
     "commander": "14.0.3",

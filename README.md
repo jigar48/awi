@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jigar48/awi/releases"><img src="https://img.shields.io/badge/release-v1.0.0--rc-blue.svg?style=flat-square" alt="Release Candidate"></a>
+  <a href="https://github.com/jigar48/awi/releases"><img src="https://img.shields.io/badge/release-v1.0.0-blue.svg?style=flat-square" alt="Release v1.0.0"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node.js-22.18+%20%7C%2024.11+%20%7C%2026.x-brightgreen.svg?style=flat-square" alt="Node.js Versions"></a>
   <a href="https://github.com/jigar48/awi/actions"><img src="https://img.shields.io/badge/tests-69%20passed-success.svg?style=flat-square" alt="Tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-purple.svg?style=flat-square" alt="License: MIT"></a>
@@ -92,7 +92,7 @@ AWI analyzes structural execution patterns. Findings indicate suspicious behavio
 
 ### Installation
 
-Version 1.0.0 is currently a release candidate. Once published to npm, install globally:
+Version 1.0.0 is published on [GitHub](https://github.com/jigar48/awi/releases/tag/v1.0.0) and [npm](https://www.npmjs.com/package/agent-workflow-inspector/v/1.0.0) (verified October 20, 2026). Install globally:
 
 ```sh
 npm install --global agent-workflow-inspector@1.0.0
@@ -112,8 +112,11 @@ Requires **Node.js 22.18+ (22.x), 24.11+ (24.x), or 26.x** and **pnpm 11.25.0**:
 git clone https://github.com/jigar48/awi.git
 cd awi
 pnpm install --frozen-lockfile
-pnpm check
+pnpm build
+pnpm verify:quickstart
 ```
+
+The verifier checks the healthy trace exits 0 with no findings and the retry trace exits 2 with `AWI002`, `AWI004`, and `AWI006`. It uses only checked-in synthetic examples and performs no network operations. See [getting started](docs/getting-started.md) for toolchain setup and full checks.
 
 Inspect the included sample traces:
 
@@ -200,7 +203,7 @@ A minimal valid canonical trace file:
 
 ### 2. OpenTelemetry (OTLP) Traces
 
-AWI natively parses standard OpenTelemetry `tracesData.resourceSpans` JSON exports. It automatically maps:
+AWI natively parses the documented OpenTelemetry `resourceSpans` JSON subset. It automatically maps:
 
 - `spanId` → `operation.id`
 - `parentSpanId` → `operation.parentId`
@@ -230,7 +233,6 @@ const report = analyze(traces, {
     AWI001: { threshold: 5 },
     AWI004: { windowSeconds: 20 },
   },
-  failOn: 'medium',
 });
 
 // 3. Inspect findings
@@ -242,10 +244,12 @@ for (const finding of report.findings) {
   console.log(`  Evidence:`, finding.evidence);
 }
 
-if (!report.passed) {
-  console.error(
-    `Quality gate failed with ${report.summary.findingsCount} findings.`,
-  );
+if (!report.complete) {
+  throw new Error('Analysis incomplete');
+}
+if (report.findings.some((finding) => finding.severity !== 'low')) {
+  console.error(`Quality gate failed with ${report.findings.length} findings.`);
+  process.exitCode = 1;
 }
 ```
 
@@ -253,33 +257,7 @@ if (!report.passed) {
 
 ## CI / CD Integration
 
-Use AWI in GitHub Actions to stop buggy agent updates from entering production:
-
-```yaml
-name: AI Agent Trace Audit
-
-on:
-  pull_request:
-    branches: [main]
-  push:
-    branches: [main]
-
-jobs:
-  audit-agent-traces:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Install AWI
-        run: npm install --global agent-workflow-inspector@1.0.0
-
-      - name: Inspect Test Traces
-        run: awi inspect ./test-traces --fail-on high --format human --output awi-report.json
-```
+See [CI integration](docs/ci-integration.md) for separate examples for this source checkout and for installing AWI in another repository. Both use the same exit-code gate.
 
 ---
 

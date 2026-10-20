@@ -1,8 +1,12 @@
 # Changelog
 
-## 1.0.0 — Unreleased
+## Unreleased
 
-Initial local V1: canonical AWI JSON and OTLP subset; strict validation; SHA-256 fingerprints; six bounded rules; CLI/library; human/JSON reports; configuration; synthetic examples; security/regression/CLI tests; schemas; cross-platform CI. No npm publication or public release performed.
+Added an offline synthetic quickstart verifier and CI matrix step; corrected publication status and source/consumer instructions. No runtime, API, or dependency changes.
+
+## 1.0.0 — 2026-10-19
+
+Initial local V1: canonical AWI JSON and OTLP subset; strict validation; SHA-256 fingerprints; six bounded rules; CLI/library; human/JSON reports; configuration; synthetic examples; security/regression/CLI tests; schemas; cross-platform CI. Published on GitHub and npm; status confirmed October 20, 2026 (see [release procedure](docs/releasing.md)).
 
 ### Release preparation
 

@@ -360,3 +360,48 @@ it('bounds canonicalization work for long ancestor keys and wide descendants', (
   expect(result.status).toBe(0);
   expect(result.stdout.trim()).toBe('BOUNDED_CANONICALIZATION');
 });
+
+// Execute the documented program, substituting only local import/input paths.
+it.each([
+  ['healthy/basic.json', 0],
+  ['suspicious/retries.json', 1],
+] as const)('README library gate exits correctly for %s', (fixture, status) => {
+  const readme = readFileSync('README.md', 'utf8');
+  const section = readme.split('## TypeScript Library API')[1];
+  const example = section?.match(/```ts\r?\n([\s\S]*?)```/)?.[1];
+  expect(example).toBeDefined();
+  const program = example!
+    .replace(
+      "'agent-workflow-inspector'",
+      JSON.stringify(pathToFileURL(resolve('dist/index.js')).href),
+    )
+    .replace("'trace.json'", JSON.stringify(resolve('examples', fixture)));
+  const result = spawnSync(process.execPath, ['--input-type=module'], {
+    input: program,
+    encoding: 'utf8',
+    timeout: 15000,
+  });
+  expect(result.error).toBeUndefined();
+  expect(result.signal).toBeNull();
+  expect(result.status).toBe(status);
+  if (status === 0) expect(result.stderr).toBe('');
+  else {
+    expect(result.stderr.trim()).toBe('Quality gate failed with 3 findings.');
+    for (const rule of ['AWI002', 'AWI004', 'AWI006'])
+      expect(result.stdout).toContain(rule);
+  }
+});
+
+it('changed documentation contains no Unicode replacement characters', () => {
+  for (const file of [
+    'README.md',
+    'CHANGELOG.md',
+    'docs/getting-started.md',
+    'docs/ci-integration.md',
+    'docs/releases/v1.0.0.md',
+    'docs/releasing.md',
+    'docs/verification.md',
+  ]) {
+    expect(readFileSync(file, 'utf8'), file).not.toContain('\uFFFD');
+  }
+});

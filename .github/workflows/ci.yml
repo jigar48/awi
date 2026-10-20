@@ -22,6 +22,7 @@ jobs:
       - uses: pnpm/action-setup@a8198c4bff370c8506180b035930dea56dbd5288 # v5
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
+      - run: pnpm verify:quickstart
       - run: pnpm format:check
       - run: pnpm schemas
       - run: git diff --exit-code -- docs/schemas
