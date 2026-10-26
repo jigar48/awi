@@ -57,7 +57,7 @@ AWI operates as a streamlined three-stage pipeline designed for memory safety, s
 
 2. **Deterministic Detection Engine**:
    - Segments non-overlapping, timed sibling tool invocations under each parent.
-   - Runs 6 purpose-built heuristic detectors (AWI001 through AWI006) to identify repetition, retry storms, execution cycles, graph explosion, and resource waste.
+   - Provides 7 heuristic detectors (AWI001 through AWI007; AWI007 is opt-in) to identify repetition, retry storms, execution cycles, graph explosion, and resource waste.
 
 3. **Outputs & Gating**:
    - **Terminal Human Format**: High-contrast, colorized terminal summary highlighting rule IDs, implicated operation IDs, and specific evidence.
@@ -82,6 +82,12 @@ AWI analyzes structural execution patterns. Findings indicate suspicious behavio
 | **AWI004** | `high`           | Rapid retry storm               | 5 equivalent attempts in a 30s window after explicit failure | Aggressive, unbacked retry loops hammering downstream APIs.                             |
 | **AWI005** | `medium`         | Runaway trace complexity        | > 100 total operations or parent depth > 20                  | Runaway recursive subagent delegation or infinite planning trees.                       |
 | **AWI006** | `medium`         | Resource burn on faulty calls   | Implicated leaf operations with recorded usage or cost       | Direct financial and token waste attributed to faulty loops.                            |
+
+AWI007 (medium severity, moderate confidence; disabled by default) detects at least four consecutive recorded failures under the same trace and parent, with the same tool name and explicit error code, and at least three distinct argument fingerprints. Calls must have positive durations and form a non-overlapping sequence. It records repeated failures with changing arguments; it does not infer intent or lack of progress. See [conditions and limitations](docs/detection-rules.md#awi007-repeated-failure-with-argument-drift).
+
+```sh
+node dist/cli/index.js inspect examples/suspicious/argument-drift.json --config examples/argument-drift.config.json --format json --fail-on medium
+```
 
 > [!NOTE]
 > Findings are heuristics, not proof of bugs. Intentional polling loops, exponential backoff sequences, or idempotent retries may trigger rules depending on thresholds. AWI does not infer agent intent from timestamps.
@@ -274,7 +280,8 @@ Customize detection sensitivities using a strict configuration file:
     "AWI003": { "enabled": true, "minRepetitions": 3, "maxCycleLength": 6 },
     "AWI004": { "enabled": true, "threshold": 5, "windowSeconds": 30 },
     "AWI005": { "enabled": true, "maxOperations": 100, "maxDepth": 20 },
-    "AWI006": { "enabled": true }
+    "AWI006": { "enabled": true },
+    "AWI007": { "enabled": false, "threshold": 4, "minDistinctArguments": 3 }
   },
   "fingerprint": {
     "ignorePaths": ["timestamp", "requestId", "metadata.nonce"]

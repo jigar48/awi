@@ -18,6 +18,7 @@ const titles: Record<RuleId, string> = {
   AWI004: 'Retry storm',
   AWI005: 'Excessive execution steps or depth',
   AWI006: 'Recorded resource usage associated with suspicious execution',
+  AWI007: 'Repeated failure with argument drift',
 };
 export function analyze(
   traces: Trace[],
@@ -118,7 +119,9 @@ export function analyze(
         'Heuristic finding based on recorded execution evidence; intentional behavior may match.',
       explanation,
       remediation:
-        'Review the referenced operations and configured policy before changing the workflow.',
+        ruleId === 'AWI007'
+          ? 'Review the shared error code and retry policy; consider bounded retries or escalation before varying arguments further.'
+          : 'Review the referenced operations and configured policy before changing the workflow.',
       operationIds: ops.map((o) => o.id),
       evidence: {
         ...evidence,
@@ -224,6 +227,54 @@ export function analyze(
           'Overlapping sibling operations excluded from sequence rules.',
         );
       for (const run of runs) {
+        if (config.rules.AWI007.enabled) {
+          const policy = config.rules.AWI007;
+          let failures: Operation[] = [];
+          // Maximal disjoint runs avoid sliding-window duplicates; input/report budgets bound storage.
+          const distinct = new Set<string>();
+          let tool: string | undefined;
+          let code: string | undefined;
+          const flush = () => {
+            if (
+              failures.length >= policy.threshold &&
+              distinct.size >= policy.minDistinctArguments
+            )
+              add(
+                'AWI007',
+                trace.traceId,
+                failures,
+                {
+                  toolName: tool,
+                  failedCalls: failures.length,
+                  distinctArgumentFingerprints: distinct.size,
+                  errorCode: code,
+                },
+                'Consecutive recorded failures share a tool and explicit error code while argument fingerprints vary. This does not establish intent or lack of progress.',
+              );
+            failures = [];
+            distinct.clear();
+          };
+          for (const op of run) {
+            if (op.type !== 'tool') continue;
+            const fp = fps.get(op.id);
+            if (
+              op.status !== 'error' ||
+              !op.error?.code?.trim() ||
+              op.arguments === undefined ||
+              !fp
+            ) {
+              flush();
+              continue;
+            }
+            const name = op.toolName ?? op.name;
+            if (name !== tool || op.error.code !== code) flush();
+            tool = name;
+            code = op.error.code;
+            failures.push(op);
+            distinct.add(fp);
+          }
+          flush();
+        }
         // Project known tool calls; non-tool spans still constrain timing and parent context.
         let segment: Operation[] = [];
         const segments: Operation[][] = [];

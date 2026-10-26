@@ -20,3 +20,7 @@ Findings sort by descending severity, trace ID, rule ID, then operation ID list 
 ```
 
 complete:false means truncation and is never clean success. Eligibility warnings identify unavailable timing/argument evidence. Complete means all applicable analysis finished, not that absent information was reconstructed. Incompatible contracts require a version change. Evidence fields are rule-specific and additive; consumers should not parse prose.
+
+AWI007 adds a supported rule identifier to report v1 with medium severity and moderate confidence. Its evidence fields are `toolName` (string), `failedCalls` (integer), `distinctArgumentFingerprints` (integer), `errorCode` (shared exact code), and the existing `references`. Operation IDs list the maximal qualifying run in timestamp order. Arguments, fingerprint values and error messages are absent from evidence.
+
+The report envelope and fingerprint version are unchanged. This is additive, but consumers with a closed AWI001–AWI006 enum must update their schema or rule switch before enabling AWI007. Older configuration validators reject the new rule key even when disabled. Existing configs retain their behavior because AWI007 defaults off.

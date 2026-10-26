@@ -10,7 +10,12 @@
         "AWI003": { "enabled": true, "minRepetitions": 3, "maxCycleLength": 6 },
         "AWI004": { "enabled": true, "threshold": 5, "windowSeconds": 30 },
         "AWI005": { "enabled": true, "maxOperations": 100, "maxDepth": 20 },
-        "AWI006": { "enabled": true }
+        "AWI006": { "enabled": true },
+        "AWI007": {
+          "enabled": false,
+          "threshold": 4,
+          "minDistinctArguments": 3
+        }
       },
       "type": "object",
       "properties": {
@@ -117,9 +122,42 @@
           "properties": { "enabled": { "default": true, "type": "boolean" } },
           "required": ["enabled"],
           "additionalProperties": false
+        },
+        "AWI007": {
+          "default": {
+            "enabled": false,
+            "threshold": 4,
+            "minDistinctArguments": 3
+          },
+          "type": "object",
+          "properties": {
+            "enabled": { "default": false, "type": "boolean" },
+            "threshold": {
+              "default": 4,
+              "type": "integer",
+              "minimum": 4,
+              "maximum": 100
+            },
+            "minDistinctArguments": {
+              "default": 3,
+              "type": "integer",
+              "minimum": 3,
+              "maximum": 100
+            }
+          },
+          "required": ["enabled", "threshold", "minDistinctArguments"],
+          "additionalProperties": false
         }
       },
-      "required": ["AWI001", "AWI002", "AWI003", "AWI004", "AWI005", "AWI006"],
+      "required": [
+        "AWI001",
+        "AWI002",
+        "AWI003",
+        "AWI004",
+        "AWI005",
+        "AWI006",
+        "AWI007"
+      ],
       "additionalProperties": false
     },
     "fingerprint": {

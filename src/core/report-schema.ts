@@ -42,6 +42,7 @@ export const reportSchema = z.strictObject({
         'AWI004',
         'AWI005',
         'AWI006',
+        'AWI007',
       ]),
       severity: z.enum(['low', 'medium', 'high']),
       confidence: z.enum(['high', 'moderate']),

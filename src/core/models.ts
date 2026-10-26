@@ -1,6 +1,6 @@
 export type Severity = 'low' | 'medium' | 'high';
 export type RuleId =
-  'AWI001' | 'AWI002' | 'AWI003' | 'AWI004' | 'AWI005' | 'AWI006';
+  'AWI001' | 'AWI002' | 'AWI003' | 'AWI004' | 'AWI005' | 'AWI006' | 'AWI007';
 export interface Operation {
   id: string;
   parentId?: string;

@@ -36,6 +36,16 @@ export const configSchema = z.strictObject({
       AWI006: z
         .strictObject({ enabled: z.boolean().default(true) })
         .default({ enabled: true }),
+      AWI007: z
+        .strictObject({
+          enabled: z.boolean().default(false),
+          threshold: positive.min(4).max(LIMITS.repetitionWindow).default(4),
+          minDistinctArguments: positive
+            .min(3)
+            .max(LIMITS.repetitionWindow)
+            .default(3),
+        })
+        .default({ enabled: false, threshold: 4, minDistinctArguments: 3 }),
     })
     .default({
       AWI001: { enabled: true, threshold: 4 },
@@ -44,6 +54,7 @@ export const configSchema = z.strictObject({
       AWI004: { enabled: true, threshold: 5, windowSeconds: 30 },
       AWI005: { enabled: true, maxOperations: 100, maxDepth: 20 },
       AWI006: { enabled: true },
+      AWI007: { enabled: false, threshold: 4, minDistinctArguments: 3 },
     }),
   fingerprint: z
     .strictObject({

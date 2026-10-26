@@ -60,7 +60,15 @@
         "properties": {
           "ruleId": {
             "type": "string",
-            "enum": ["AWI001", "AWI002", "AWI003", "AWI004", "AWI005", "AWI006"]
+            "enum": [
+              "AWI001",
+              "AWI002",
+              "AWI003",
+              "AWI004",
+              "AWI005",
+              "AWI006",
+              "AWI007"
+            ]
           },
           "severity": { "type": "string", "enum": ["low", "medium", "high"] },
           "confidence": { "type": "string", "enum": ["high", "moderate"] },

@@ -13,3 +13,5 @@ awi-sha256-v1 hashes operation type, toolName (fallback name), argument presence
 Generated canonical JSON is not subject to the per-input-string limit; argument objects containing multiple individually valid strings remain supported within the content budget. The v1 byte contract is unchanged. Ignored paths are compiled into bounded maps, safely reused while unchanged, and never matched by repeatedly serializing full ancestor paths.
 
 Identical fingerprints mean identical recorded values under these rules, not identical effects. Hashes are sensitive correlators, not anonymization, and are absent from ordinary reports.
+
+AWI007 defaults to `{ "enabled": false, "threshold": 4, "minDistinctArguments": 3 }`. Threshold accepts integers 4–100; minDistinctArguments accepts integers 3–100. Both are minimums over a maximal sequential failure run, so the distinct minimum can exceed the call threshold. Unknown fields and non-integer/out-of-range values fail strict validation. Enable with [the opt-in example](../examples/argument-drift.config.json).

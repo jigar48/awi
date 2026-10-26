@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+Added opt-in AWI007 (Repeated Failure with Argument Drift), strict configuration, additive report rule identifier, synthetic example, privacy and sequence regression coverage. Uses existing fingerprints and timing normalization; no runtime dependencies or network operations added.
+
 Added an offline synthetic quickstart verifier and CI matrix step; corrected publication status and source/consumer instructions. No runtime, API, or dependency changes.
 
 ## 1.0.0 — 2026-10-19

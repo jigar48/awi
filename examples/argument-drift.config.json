@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "AWI007": {
+      "enabled": true,
+      "threshold": 4,
+      "minDistinctArguments": 3
+    }
+  }
+}

@@ -26,6 +26,11 @@
     },
     "AWI006": {
       "enabled": true
+    },
+    "AWI007": {
+      "enabled": false,
+      "threshold": 4,
+      "minDistinctArguments": 3
     }
   },
   "fingerprint": {

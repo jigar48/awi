@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "traceId": "argument-drift",
+  "operations": [
+    {
+      "id": "drift-0",
+      "type": "tool",
+      "name": "search",
+      "arguments": {
+        "query": "synthetic-0"
+      },
+      "status": "error",
+      "error": {
+        "code": "INVALID_QUERY"
+      },
+      "startTime": "2023-11-14T22:13:20.000Z",
+      "endTime": "2023-11-14T22:13:20.500Z"
+    },
+    {
+      "id": "drift-1",
+      "type": "tool",
+      "name": "search",
+      "arguments": {
+        "query": "synthetic-1"
+      },
+      "status": "error",
+      "error": {
+        "code": "INVALID_QUERY"
+      },
+      "startTime": "2023-11-14T22:13:21.000Z",
+      "endTime": "2023-11-14T22:13:21.500Z"
+    },
+    {
+      "id": "drift-2",
+      "type": "tool",
+      "name": "search",
+      "arguments": {
+        "query": "synthetic-2"
+      },
+      "status": "error",
+      "error": {
+        "code": "INVALID_QUERY"
+      },
+      "startTime": "2023-11-14T22:13:22.000Z",
+      "endTime": "2023-11-14T22:13:22.500Z"
+    },
+    {
+      "id": "drift-3",
+      "type": "tool",
+      "name": "search",
+      "arguments": {
+        "query": "synthetic-3"
+      },
+      "status": "error",
+      "error": {
+        "code": "INVALID_QUERY"
+      },
+      "startTime": "2023-11-14T22:13:23.000Z",
+      "endTime": "2023-11-14T22:13:23.500Z"
+    }
+  ]
+}

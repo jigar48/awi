@@ -405,3 +405,28 @@ it('changed documentation contains no Unicode replacement characters', () => {
     expect(readFileSync(file, 'utf8'), file).not.toContain('\uFFFD');
   }
 });
+
+it('AWI007 JSON, privacy, opt-in and severity exit codes', () => {
+  const path = resolve('examples/suspicious/argument-drift.json');
+  const config = resolve('examples/argument-drift.config.json');
+  expect(run(['inspect', path, '--format', 'json']).status).toBe(0);
+  const args = ['inspect', path, '--config', config, '--format', 'json'];
+  const result = run(args);
+  expect(result.status).toBe(0);
+  expect(result.stderr).toBe('');
+  const report = JSON.parse(result.stdout);
+  expect(report.findings.map((f: { ruleId: string }) => f.ruleId)).toEqual([
+    'AWI007',
+  ]);
+  expect(report.findings[0].evidence.failedCalls).toBe(4);
+  expect(result.stdout).not.toContain('synthetic-');
+  expect(run([...args, '--fail-on', 'medium']).status).toBe(2);
+  expect(run([...args, '--fail-on', 'low']).status).toBe(2);
+  expect(run([...args, '--fail-on', 'none']).status).toBe(0);
+  const invalid = join(folder, 'invalid-drift-config.json');
+  writeFileSync(
+    invalid,
+    JSON.stringify({ rules: { AWI007: { threshold: 3 } } }),
+  );
+  expect(run(['inspect', path, '--config', invalid]).status).toBe(1);
+});
