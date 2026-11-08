@@ -327,6 +327,13 @@ it('validates report contracts including opt-in redacted content', () => {
     true,
   );
   expect(reportSchema.safeParse(report).success).toBe(true);
+  expect(reportSchema.safeParse({ ...report, version: 1 }).success).toBe(false);
+  expect(
+    reportSchema.safeParse({
+      ...report,
+      summaries: [{ ...report.summaries[0], traceId: 'recorded-id' }],
+    }).success,
+  ).toBe(false);
 });
 it('excludes missing arguments and zero-duration timing with explicit warnings', () => {
   const missing = analyze([trace(repeat(5, { arguments: undefined }))]);

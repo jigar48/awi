@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jigar48/awi/releases"><img src="https://img.shields.io/badge/release-v1.0.0-blue.svg?style=flat-square" alt="Release v1.0.0"></a>
+  <a href="https://github.com/jigar48/awi/releases"><img src="https://img.shields.io/github/v/release/jigar48/awi?style=flat-square" alt="Latest GitHub release"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node.js-22.18+%20%7C%2024.11+%20%7C%2026.x-brightgreen.svg?style=flat-square" alt="Node.js Versions"></a>
   <a href="https://github.com/jigar48/awi/actions"><img src="https://img.shields.io/badge/tests-69%20passed-success.svg?style=flat-square" alt="Tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-purple.svg?style=flat-square" alt="License: MIT"></a>
@@ -98,16 +98,18 @@ node dist/cli/index.js inspect examples/suspicious/argument-drift.json --config 
 
 ### Installation
 
-Version 1.0.0 is published on [GitHub](https://github.com/jigar48/awi/releases/tag/v1.0.0) and [npm](https://www.npmjs.com/package/agent-workflow-inspector/v/1.0.0) (verified October 20, 2026). Install globally:
+These docs describe v2.0.0. If you consume JSON reports from v1, read the [v2 migration guide](docs/report-schema.md#migrating-from-v1) before upgrading.
+
+Install v2.0.0 from the [GitHub release tarball](https://github.com/jigar48/awi/releases/tag/v2.0.0):
 
 ```sh
-npm install --global agent-workflow-inspector@1.0.0
+npm install --global https://github.com/jigar48/awi/releases/download/v2.0.0/agent-workflow-inspector-2.0.0.tgz
 ```
 
-To run directly via `npx`:
+When v2.0.0 is available on [npm](https://www.npmjs.com/package/agent-workflow-inspector?activeTab=versions), you can also run it via `npx`:
 
 ```sh
-npx agent-workflow-inspector@1.0.0 inspect trace.json
+npx agent-workflow-inspector@2.0.0 inspect trace.json
 ```
 
 ### Run from Source
@@ -149,17 +151,21 @@ awi inspect <paths...> [options]
 
 ### Options
 
-| Flag             | Argument                              | Description                                                     | Default  |
-| ---------------- | ------------------------------------- | --------------------------------------------------------------- | -------- |
-| `--format`       | `human` \| `json`                     | Output presentation format.                                     | `human`  |
-| `--input-format` | `auto` \| `awi` \| `otel`             | Input parser mode. `auto` detects format from root structure.   | `auto`   |
-| `--fail-on`      | `low` \| `medium` \| `high` \| `none` | Minimum finding severity that causes exit code 2.               | `high`   |
-| `--output`       | `<path>`                              | Write structured report to a new file (existing files refused). | none     |
-| `--config`       | `<path>`                              | Path to custom `awi.config.json` threshold configuration.       | none     |
-| `--show-content` | none                                  | Include recorded message/payload content (with key redaction).  | disabled |
-| `--no-color`     | none                                  | Disable terminal ANSI color codes.                              | disabled |
-| `-V, --version`  | none                                  | Display version number.                                         |          |
-| `-h, --help`     | none                                  | Display CLI help.                                               |          |
+| Flag             | Argument                              | Description                                                       | Default  |
+| ---------------- | ------------------------------------- | ----------------------------------------------------------------- | -------- |
+| `--format`       | `human` \| `json`                     | Output presentation format.                                       | `human`  |
+| `--input-format` | `auto` \| `awi` \| `otel`             | Input parser mode. `auto` detects format from root structure.     | `auto`   |
+| `--fail-on`      | `low` \| `medium` \| `high` \| `none` | Minimum finding severity that causes exit code 2.                 | `high`   |
+| `--output`       | `<path>`                              | Write structured report to a new file (existing files refused).   | none     |
+| `--config`       | `<path>`                              | Path to custom `awi.config.json` threshold configuration.         | none     |
+| `--show-content` | none                                  | Include recorded IDs, labels and payloads with limited redaction. | disabled |
+| `--no-color`     | none                                  | Disable terminal ANSI color codes.                                | disabled |
+| `-V, --version`  | none                                  | Display version number.                                           |          |
+| `-h, --help`     | none                                  | Display CLI help.                                                 |          |
+
+### Sharing reports
+
+Human and JSON reports use report-local trace and operation references. They omit recorded names, tool names, error codes, payloads, and fingerprint values, including when AWI007 is enabled. Counts, timing, resource amounts, source indices, and operation relationships remain visible. Use `--show-content` (or `analyze(traces, config, true)`) only for private inspection. It can expose recorded identifiers, labels and payloads despite key-based redaction. See the [synthetic before/after example](docs/security.md#synthetic-before-and-after) and [report v2 migration notes](docs/report-schema.md).
 
 ### Exit Codes
 

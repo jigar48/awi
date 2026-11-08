@@ -4,6 +4,7 @@ import { Command, Option } from 'commander';
 import { open, lstat, opendir, realpath, link, unlink } from 'node:fs/promises';
 import { resolve, join, dirname, parse as parsePath } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import manifest from '../../package.json' with { type: 'json' };
 import { analyze, severityRank } from '../core/analysis.js';
 import { ingest } from '../adapters/index.js';
 import { parseJson, AwiError, LIMITS, safeText } from '../security/index.js';
@@ -138,7 +139,7 @@ const program = new Command()
   })
   .name('awi')
   .description('Find loops, retries, and wasted work in AI agent traces.')
-  .version('1.0.0');
+  .version(manifest.version);
 program
   .command('inspect')
   .argument('<paths...>', 'JSON files or directories (recursive; no symlinks)')
@@ -163,7 +164,7 @@ program
   .option('--no-color', 'Disable colors (output is plain text)')
   .option(
     '--show-content',
-    'Include recorded content with key-based redaction; may expose private data',
+    'Include recorded IDs, labels and payloads with key-based redaction; may expose private data',
   )
   .action(
     async (

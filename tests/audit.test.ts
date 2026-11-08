@@ -8,6 +8,7 @@ import {
   AwiError,
   canonicalize,
   fingerprint,
+  jsonReport,
   type Trace,
   type Operation,
 } from '../src/index.js';
@@ -69,7 +70,13 @@ describe('pre-release audit regressions', () => {
       ),
     ]);
     const storm = report.findings.find((f) => f.ruleId === 'AWI004');
-    expect(storm?.operationIds).toEqual(['0', '1', '2', '3', '4']);
+    expect(storm?.operationIds).toEqual([
+      'op-1',
+      'op-2',
+      'op-3',
+      'op-4',
+      'op-5',
+    ]);
   });
   it('rejects unvalidated source references instead of leaking arbitrary values', () => {
     const operations = Array.from({ length: 4 }, (_, i) =>
@@ -406,7 +413,7 @@ it('fingerprints valid large argument objects without applying input string limi
   );
 });
 
-it('bounds default report amplification from long operation identifiers', () => {
+it('keeps the default report compact even when operation identifiers are long', () => {
   const operations = Array.from({ length: 250 }, (_, i) =>
     op(i, {
       id: String(i) + 'x'.repeat(65500),
@@ -415,9 +422,9 @@ it('bounds default report amplification from long operation identifiers', () => 
       usage: { inputTokens: 1 },
     }),
   );
-  expect(() => analyze([trace(operations)])).toThrow(
-    'Report exceeds resource limits',
-  );
+  const report = analyze([trace(operations)]);
+  expect(report.findings.length).toBeGreaterThan(0);
+  expect(jsonReport(report).length).toBeLessThan(100_000);
 });
 
 it('does not interpret binary attributes as semantic text or keep stale duplicate argument evidence', () => {

@@ -1,2 +1,9 @@
 allowBuilds:
   esbuild: true
+
+# GHSA-g3hv-75wg-m249. These development consumers still request minimatch 10.
+# Remove each override when its parent supports a patched version.
+overrides:
+  'eslint@10.13.0>minimatch': 11.0.1
+  '@eslint/config-array@0.23.5>minimatch': 11.0.1
+  '@typescript-eslint/typescript-estree@8.71.2>minimatch': 11.0.1

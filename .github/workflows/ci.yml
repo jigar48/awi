@@ -27,5 +27,5 @@ jobs:
       - run: pnpm schemas
       - run: git diff --exit-code -- docs/schemas
       - run: pnpm audit --prod
-      - run: pnpm pack --out agent-workflow-inspector-1.0.0.tgz
+      - run: pnpm audit
       - run: pnpm smoke:package

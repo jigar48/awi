@@ -19,13 +19,15 @@ const usage = z.strictObject({
     .max(Number.MAX_SAFE_INTEGER)
     .optional(),
 });
+const traceId = z.string().regex(/^trace-[1-9][0-9]*$/);
+const operationId = z.string().regex(/^op-[1-9][0-9]*$/);
 export const reportSchema = z.strictObject({
-  version: z.literal(1),
+  version: z.literal(2),
   fingerprintVersion: z.literal('awi-sha256-v1'),
   complete: z.boolean(),
   summaries: z.array(
     z.strictObject({
-      traceId: z.string(),
+      traceId,
       operations: z.number().int().nonnegative(),
       toolCalls: z.number().int().nonnegative(),
       maxDepth: z.number().int().nonnegative(),
@@ -50,16 +52,33 @@ export const reportSchema = z.strictObject({
       description: z.string(),
       explanation: z.string(),
       remediation: z.string(),
-      traceId: z.string(),
-      operationIds: z.array(z.string()),
-      evidence: z.record(z.string(), z.unknown()),
+      traceId,
+      operationIds: z.array(operationId),
+      evidence: z.looseObject({
+        references: z.array(
+          z.strictObject({
+            operationId,
+            source: z
+              .strictObject({
+                format: z.enum(['awi', 'otel']),
+                index: z
+                  .number()
+                  .int()
+                  .nonnegative()
+                  .max(Number.MAX_SAFE_INTEGER),
+              })
+              .optional(),
+          }),
+        ),
+      }),
     }),
   ),
   warnings: z.array(z.string()),
   content: z
     .array(
       z.strictObject({
-        traceId: z.string(),
+        traceId,
+        recordedTraceId: z.string(),
         operations: z.array(z.unknown()),
       }),
     )

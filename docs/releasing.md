@@ -14,7 +14,7 @@ These are read-only metadata checks, not a fresh registry installation or byte c
 Publication is a separate maintainer action requiring explicit authorization. Never republish 1.0.0, move its tag, or replace its assets to include these later changes.
 
 1. Choose an unused version and review source, package metadata, changelog and release notes. Confirm current registry ownership and existing tags/releases without exposing credentials.
-2. Run `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm verify:quickstart`, `pnpm format:check`, `pnpm schemas`, `git diff --exit-code -- docs/schemas`, `pnpm audit --prod`, and `pnpm smoke:package`.
+2. Run `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm verify:quickstart`, `pnpm format:check`, `pnpm schemas`, `git diff --exit-code -- docs/schemas`, `pnpm audit --prod`, `pnpm audit`, and `pnpm smoke:package`.
 3. Require a successful nine-job hosted matrix for the exact approved source commit. Earlier runs do not validate a later commit.
 4. Pack and inspect the artifact. Record the source SHA and tarball SHA-512 outside the package; validate the isolated installed package, executable, examples and ESM/TypeScript imports.
 5. Only after approval, use the maintainer's authenticated release process with interactive 2FA or a separately reviewed trusted publisher. Never store credentials in this repository. No publishing workflow is provided here.

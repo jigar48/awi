@@ -21,6 +21,7 @@ export function humanReport(
       `  Trace: ${safeText(f.traceId)}; operations: ${f.operationIds.map(safeText).join(', ') || 'trace-wide'}`,
       `  ${safeText(f.explanation)}`,
       `  Evidence: ${safeText(JSON.stringify(f.evidence))}`,
+      `  Remediation: ${safeText(f.remediation)}`,
     );
   for (const warning of report.warnings)
     lines.push('Warning: ' + safeText(warning));

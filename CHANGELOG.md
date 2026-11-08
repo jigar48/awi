@@ -1,10 +1,14 @@
 # Changelog
 
-## Unreleased
+## 2.0.0
 
-Added opt-in AWI007 (Repeated Failure with Argument Drift), strict configuration, additive report rule identifier, synthetic example, privacy and sequence regression coverage. Uses existing fingerprints and timing normalization; no runtime dependencies or network operations added.
+Changed the report contract to v2. Reports use local aliases for trace and operation IDs and AWI006 currency keys. AWI007 reports counts and references without raw tool names or error codes. `--show-content` retains recorded labels and IDs in its separate content section. See the [migration notes](docs/report-schema.md).
+
+Added opt-in AWI007 (Repeated Failure with Argument Drift), strict configuration, synthetic example, privacy and sequence regression coverage. Uses existing fingerprints and timing normalization. No runtime dependencies or network operations added.
 
 Added an offline synthetic quickstart verifier and CI matrix step; corrected publication status and source/consumer instructions. No runtime, API, or dependency changes.
+
+Pinned the three affected development dependency edges to `minimatch` 11.0.1 to address [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249). CI audits the full dependency tree as well as production dependencies.
 
 ## 1.0.0 — 2026-10-19
 

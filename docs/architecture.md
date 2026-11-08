@@ -18,4 +18,4 @@ Repetition uses disjoint 100-call windows. Cycles are at most 16 calls long (def
 
 ## Release checks
 
-Run pnpm check, pnpm format:check, pnpm schemas, pnpm audit, pnpm smoke:package and pnpm pack --out agent-workflow-inspector-1.0.0.tgz. Regenerate schemas when contracts change. The smoke check installs the archive in a clean OS temporary consumer outside the repository, checks tarball permissions/contents, all shipped examples, CLI options, ESM exports and strict consumer TypeScript declarations. No release credentials are needed locally. Remote pushes, publication, tags and releases require maintainer approval; CI publishes nothing.
+Run `pnpm check`, `pnpm format:check`, `pnpm schemas`, `pnpm audit`, and `pnpm smoke:package`. Regenerate schemas when contracts change. The smoke check packs the current version, installs the archive in a clean OS temporary consumer outside the repository, and checks tarball permissions and contents, shipped examples, CLI options, ESM exports, and strict consumer TypeScript declarations. No release credentials are needed locally. CI runs checks only.

@@ -34,7 +34,9 @@ export interface Finding {
   remediation: string;
   traceId: string;
   operationIds: string[];
-  evidence: Record<string, unknown>;
+  evidence: Record<string, unknown> & {
+    references: { operationId: string; source?: Operation['source'] }[];
+  };
 }
 export interface TraceSummary {
   traceId: string;
@@ -45,11 +47,15 @@ export interface TraceSummary {
   usage?: Operation['usage'];
 }
 export interface Report {
-  version: 1;
+  version: 2;
   fingerprintVersion: 'awi-sha256-v1';
   complete: boolean;
   summaries: TraceSummary[];
   findings: Finding[];
   warnings: string[];
-  content?: { traceId: string; operations: unknown[] }[];
+  content?: {
+    traceId: string;
+    recordedTraceId: string;
+    operations: unknown[];
+  }[];
 }
