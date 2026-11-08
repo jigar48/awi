@@ -61,7 +61,7 @@ function input(name: string, count = 4) {
   return path;
 }
 it('provides help and version', () => {
-  expect(run(['--version']).stdout.trim()).toBe('1.0.0');
+  expect(run(['--version']).stdout.trim()).toBe('2.0.0');
   expect(run(['--help']).stdout).toContain('inspect');
 });
 it('emits clean JSON, hides secrets, and uses severity exit codes', () => {

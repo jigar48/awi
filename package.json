@@ -1,6 +1,6 @@
 {
   "name": "agent-workflow-inspector",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Local-first, deterministic linter for AI agent traces: detect suspicious retries, repeated tool calls, execution cycles, and resource burn.",
   "type": "module",
   "license": "MIT",

@@ -98,6 +98,8 @@ node dist/cli/index.js inspect examples/suspicious/argument-drift.json --config 
 
 ### Installation
 
+This checkout prepares v2.0.0 and documents report schema v2. The published v1 package uses report schema v1 and has different privacy defaults. See the [v1 release notes](docs/releases/v1.0.0.md) and the [v2 migration guide](docs/report-schema.md#migrating-from-v1).
+
 Version 1.0.0 is published on [GitHub](https://github.com/jigar48/awi/releases/tag/v1.0.0) and [npm](https://www.npmjs.com/package/agent-workflow-inspector/v/1.0.0) (verified October 20, 2026). Install globally:
 
 ```sh
