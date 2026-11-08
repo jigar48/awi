@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 — Unreleased
+## 2.0.0
 
 Changed the report contract to v2. Reports use local aliases for trace and operation IDs and AWI006 currency keys. AWI007 reports counts and references without raw tool names or error codes. `--show-content` retains recorded labels and IDs in its separate content section. See the [migration notes](docs/report-schema.md).
 

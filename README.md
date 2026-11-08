@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jigar48/awi/releases"><img src="https://img.shields.io/badge/release-v1.0.0-blue.svg?style=flat-square" alt="Release v1.0.0"></a>
+  <a href="https://github.com/jigar48/awi/releases"><img src="https://img.shields.io/github/v/release/jigar48/awi?style=flat-square" alt="Latest GitHub release"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node.js-22.18+%20%7C%2024.11+%20%7C%2026.x-brightgreen.svg?style=flat-square" alt="Node.js Versions"></a>
   <a href="https://github.com/jigar48/awi/actions"><img src="https://img.shields.io/badge/tests-69%20passed-success.svg?style=flat-square" alt="Tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-purple.svg?style=flat-square" alt="License: MIT"></a>
@@ -98,18 +98,18 @@ node dist/cli/index.js inspect examples/suspicious/argument-drift.json --config 
 
 ### Installation
 
-This checkout prepares v2.0.0 and documents report schema v2. The published v1 package uses report schema v1 and has different privacy defaults. See the [v1 release notes](docs/releases/v1.0.0.md) and the [v2 migration guide](docs/report-schema.md#migrating-from-v1).
+These docs describe v2.0.0. If you consume JSON reports from v1, read the [v2 migration guide](docs/report-schema.md#migrating-from-v1) before upgrading.
 
-Version 1.0.0 is published on [GitHub](https://github.com/jigar48/awi/releases/tag/v1.0.0) and [npm](https://www.npmjs.com/package/agent-workflow-inspector/v/1.0.0) (verified October 20, 2026). Install globally:
+Install v2.0.0 from the [GitHub release tarball](https://github.com/jigar48/awi/releases/tag/v2.0.0):
 
 ```sh
-npm install --global agent-workflow-inspector@1.0.0
+npm install --global https://github.com/jigar48/awi/releases/download/v2.0.0/agent-workflow-inspector-2.0.0.tgz
 ```
 
-To run directly via `npx`:
+When v2.0.0 is available on [npm](https://www.npmjs.com/package/agent-workflow-inspector?activeTab=versions), you can also run it via `npx`:
 
 ```sh
-npx agent-workflow-inspector@1.0.0 inspect trace.json
+npx agent-workflow-inspector@2.0.0 inspect trace.json
 ```
 
 ### Run from Source
