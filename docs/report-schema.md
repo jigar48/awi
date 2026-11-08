@@ -1,26 +1,29 @@
-# JSON report v1
+# JSON report v2
 
-[Machine schema](schemas/report.schema.json). Fields: version 1, fingerprintVersion awi-sha256-v1, complete, summaries, findings, warnings. No clock or absolute paths. Optional content requires explicit opt-in.
+The [machine schema](schemas/report.schema.json) and the exported `Report` type use `version: 2`. The `fingerprintVersion` remains `awi-sha256-v1`. The envelope also includes `complete`, `summaries`, `findings`, and `warnings`. Optional `content` requires explicit opt-in. Reports contain no generation timestamp or absolute input path.
 
-Summary fields: traceId, operations, toolCalls, maxDepth, optional durationMs and recorded leaf usage. Unknown resources stay absent. Finding fields: ruleId, severity, confidence, title, description, explanation, remediation, traceId, operationIds, structured evidence. References contain operationId and adapter source format/index when available. traceId + operationId is authoritative across merged files; source index preserves adapter recorded order, not causal order. AWI005 is trace-wide with no individual operation list.
+Summaries include `traceId`, `operations`, `toolCalls`, `maxDepth`, and, when available, `durationMs` and recorded leaf `usage`. Findings include `ruleId`, `severity`, `confidence`, `title`, `description`, `explanation`, `remediation`, `traceId`, `operationIds`, and structured `evidence`. `evidence.references` repeats the operation aliases and includes the adapter's source format and index when available. A source index describes recorded order in its input, which can repeat across merged files. AWI005 is trace-wide and has empty operation and reference lists.
 
-Findings sort by descending severity, trace ID, rule ID, then operation ID list using lexical comparison. Warnings deduplicate and sort. CLI filesystem inputs enumerate deterministically. Operations and resource evidence use stable ID ordering after ingestion; timing rules use exact timestamps. Adapter source indices retain recorded order, so ingesting a reordered raw export changes those evidence indices deliberately. Direct-library trace fragments produce the same findings regardless of fragment order.
+`traceId` uses `trace-N`. `operationIds` and `evidence.references[].operationId` use `op-N`. Join on `traceId` within a report and on the pair `(traceId, operationId)` for operation references. Ordinals start at 1 and follow the lexical order of recorded trace IDs and the recorded operation IDs within each merged trace. They can shift when inputs are added, removed, or renamed. Findings retain descending severity and the existing lexical order of underlying trace IDs, rule IDs, and operation ID lists. Source indices still depend on the order in the original export. Warnings deduplicate and sort.
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "fingerprintVersion": "awi-sha256-v1",
   "complete": true,
   "summaries": [
-    { "traceId": "demo", "operations": 0, "toolCalls": 0, "maxDepth": 0 }
+    { "traceId": "trace-1", "operations": 0, "toolCalls": 0, "maxDepth": 0 }
   ],
   "findings": [],
   "warnings": []
 }
 ```
 
-complete:false means truncation and is never clean success. Eligibility warnings identify unavailable timing/argument evidence. Complete means all applicable analysis finished, not that absent information was reconstructed. Incompatible contracts require a version change. Evidence fields are rule-specific and additive; consumers should not parse prose.
+`complete: false` indicates truncation and produces a CLI operational failure. Eligibility warnings identify unavailable timing or argument evidence. Consumers should use structured fields for integrations and allow additive evidence fields.
 
-AWI007 adds a supported rule identifier to report v1 with medium severity and moderate confidence. Its evidence fields are `toolName` (string), `failedCalls` (integer), `distinctArgumentFingerprints` (integer), `errorCode` (shared exact code), and the existing `references`. Operation IDs list the maximal qualifying run in timestamp order. Arguments, fingerprint values and error messages are absent from evidence.
+## Migrating from v1
 
-The report envelope and fingerprint version are unchanged. This is additive, but consumers with a closed AWI001–AWI006 enum must update their schema or rule switch before enabling AWI007. Older configuration validators reject the new rule key even when disabled. Existing configs retain their behavior because AWI007 defaults off.
+- Update consumers to recognize `version: 2`. The v2 validator rejects v1, and v1 validators reject v2. Trace input and configuration versions are independent of the report version.
+- Replace joins to raw input IDs with report-local joins. For private debugging, `--show-content` and `analyze(traces, config, true)` add `content[].recordedTraceId` alongside the report alias `content[].traceId`. The normalized operation at zero-based index `N - 1` in `content[].operations` corresponds to `op-N` and contains the recorded ID, subject to output sanitization. Findings and summaries keep the same aliases. See [privacy limits](security.md).
+- AWI006 `evidence.recordedCosts` groups amounts by `currency-N` in lexical order of recorded currency labels within the finding. These aliases have finding-local scope.
+- AWI007 remains disabled by default. Once enabled, it reports `failedCalls`, `distinctArgumentFingerprints` and `references`, with operation IDs in run order. V2 omits `toolName` and `errorCode` from evidence even when recorded content is enabled.

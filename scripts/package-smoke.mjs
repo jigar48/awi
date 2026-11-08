@@ -122,6 +122,8 @@ try {
       scratch,
     ),
   );
+  assert.equal(healthy.version, 2);
+  assert.equal(healthy.summaries[0].traceId, 'trace-1');
   assert.equal(healthy.findings.length, 0);
   for (const [path, format, rule, exit] of [
     ['suspicious/retries.json', 'awi', 'AWI002', 2],
@@ -149,6 +151,24 @@ try {
     assert.equal(report.complete, true);
     assert.ok(report.findings.some((f) => f.ruleId === rule));
   }
+  const drift = run(
+    [
+      'exec',
+      'awi',
+      'inspect',
+      example('suspicious/argument-drift.json'),
+      '--config',
+      example('argument-drift.config.json'),
+      '--format',
+      'json',
+    ],
+    scratch,
+  );
+  assert.doesNotMatch(drift, /argument-drift|drift-[0-3]|search|INVALID_QUERY/);
+  assert.deepEqual(
+    JSON.parse(drift).findings.map((f) => f.ruleId),
+    ['AWI007'],
+  );
   const output = join(scratch, 'x'.repeat(230) + '.json');
   run(
     [

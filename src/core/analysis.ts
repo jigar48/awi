@@ -83,7 +83,7 @@ export function analyze(
     validated.push(result.data);
   }
   const report: Report = {
-    version: 1,
+    version: 2,
     fingerprintVersion: 'awi-sha256-v1',
     complete: true,
     summaries: [],
@@ -134,9 +134,10 @@ export function analyze(
       },
     });
   }
-  for (const trace of [...grouped.values()].sort((a, b) =>
-    a.traceId < b.traceId ? -1 : a.traceId > b.traceId ? 1 : 0,
-  )) {
+  const orderedTraces = [...grouped.values()].sort((a, b) =>
+    compare(a.traceId, b.traceId),
+  );
+  for (const trace of orderedTraces) {
     trace.operations.sort((a, b) => compare(a.id, b.id));
     const normalized = normalize(trace);
     report.warnings.push(...normalized.warnings);
@@ -244,10 +245,8 @@ export function analyze(
                 trace.traceId,
                 failures,
                 {
-                  toolName: tool,
                   failedCalls: failures.length,
                   distinctArgumentFingerprints: distinct.size,
-                  errorCode: code,
                 },
                 'Consecutive recorded failures share a tool and explicit error code while argument fingerprints vary. This does not establish intent or lack of progress.',
               );
@@ -471,7 +470,14 @@ export function analyze(
           recorded,
           {
             recordedUsage: tokens,
-            recordedCosts: costs,
+            recordedCosts: Object.fromEntries(
+              Object.keys(costs)
+                .sort(compare)
+                .map((currency, index) => [
+                  `currency-${index + 1}`,
+                  costs[currency],
+                ]),
+            ),
             coverage:
               'Only implicated leaf operations with recorded usage or cost',
             relatedRules: [...new Set(related.map((f) => f.ruleId))],
@@ -492,6 +498,30 @@ export function analyze(
       compare(a.ruleId, b.ruleId) ||
       compare(a.operationIds.join('\0'), b.operationIds.join('\0')),
   );
+  // Assign report-local aliases after detection so the original IDs still drive
+  // grouping, evidence association, ordering, and the finding cap.
+  const traceRefs = new Map(
+    orderedTraces.map((trace, index) => [
+      trace.traceId,
+      {
+        id: `trace-${index + 1}`,
+        operations: new Map(
+          trace.operations.map((op, index) => [op.id, `op-${index + 1}`]),
+        ),
+      },
+    ]),
+  );
+  for (const summary of report.summaries)
+    summary.traceId = traceRefs.get(summary.traceId)!.id;
+  for (const finding of report.findings) {
+    const refs = traceRefs.get(finding.traceId)!;
+    finding.traceId = refs.id;
+    finding.operationIds = finding.operationIds.map((id) =>
+      refs.operations.get(id)!,
+    );
+    for (const reference of finding.evidence.references)
+      reference.operationId = refs.operations.get(reference.operationId)!;
+  }
   report.warnings = [...new Set(report.warnings)].sort();
   try {
     validateValue(report);
@@ -501,12 +531,11 @@ export function analyze(
     throw error;
   }
   if (showContent)
-    report.content = [...grouped.values()]
-      .sort((a, b) => compare(a.traceId, b.traceId))
-      .map((t) => ({
-        traceId: t.traceId,
-        operations: redact(t.operations) as unknown[],
-      }));
+    report.content = orderedTraces.map((t) => ({
+      traceId: traceRefs.get(t.traceId)!.id,
+      recordedTraceId: t.traceId,
+      operations: redact(t.operations) as unknown[],
+    }));
   return report;
 }
 function compare(a: string, b: string): number {

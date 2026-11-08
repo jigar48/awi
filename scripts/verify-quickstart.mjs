@@ -16,7 +16,7 @@ function inspect(example, expectedStatus, expectedRules) {
   assert.equal(result.status, expectedStatus, `${example}: ${result.stderr}`);
   assert.equal(result.stderr, '', `${example}: unexpected stderr`);
   const report = JSON.parse(result.stdout);
-  assert.equal(report.version, 1);
+  assert.equal(report.version, 2);
   assert.equal(report.complete, true, `${example}: incomplete report`);
   assert.deepEqual(report.warnings, []);
   assert.deepEqual(

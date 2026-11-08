@@ -38,12 +38,10 @@ describe('AWI007', () => {
     expect(result[0]).toMatchObject({
       severity: 'medium',
       confidence: 'moderate',
-      operationIds: ['o0', 'o1', 'o2', 'o3'],
+      operationIds: ['op-1', 'op-2', 'op-3', 'op-4'],
       evidence: {
-        toolName: 'search',
         failedCalls: 4,
         distinctArgumentFingerprints: 4,
-        errorCode: 'INVALID',
       },
     });
     expect(result[0]!.remediation).toContain('bounded retries');
@@ -242,23 +240,50 @@ it('AWI007 projects timed non-tool siblings and constrains their overlap', () =>
   model.endTime = new Date(1700000001500).toISOString();
   expect(findings([...ops, model])).toEqual([]);
 });
-it('AWI007 preserves renderer control escaping and resource association', () => {
-  const ops = calls();
-  ops.forEach((o) => {
-    o.toolName = 'tool\u001b[31m';
-    o.error = { code: 'code\u202e', message: 'PRIVATE_MESSAGE' };
-    o.usage = { inputTokens: 1 };
-  });
-  const report = analyze([trace(ops)], config);
-  expect(
-    report.findings.find((f) => f.ruleId === 'AWI006')?.evidence.recordedUsage,
-  ).toEqual({ inputTokens: 4 });
-  expect(humanReport(report)).not.toContain('\u001b');
-  expect(humanReport(report)).not.toContain('\u202e');
-  expect(jsonReport(report)).not.toContain('\u202e');
-  expect(reportSchema.safeParse(JSON.parse(jsonReport(report))).success).toBe(
-    true,
-  );
+it('uses the same scoped aliases across AWI007 and resource findings', () => {
+  const ops = calls().map((op, index): Operation => ({
+    ...op,
+    id: `PRIVATE_OP_${index}`,
+    toolName: 'PRIVATE_TOOL',
+    error: { code: 'PRIVATE_CODE' },
+    usage: { inputTokens: 1 },
+    cost: { currency: index % 2 ? 'ZZZ' : 'ZZY', amount: index + 1 },
+    source: { format: 'awi', index },
+  }));
+  const traces = [trace(ops, 'PRIVATE_TRACE_Z'), trace(ops, 'PRIVATE_TRACE_A')];
+  const report = analyze(traces, config);
+  expect(report).toEqual(analyze([...traces].reverse(), config));
+  expect(report.summaries.map((summary) => summary.traceId)).toEqual([
+    'trace-1',
+    'trace-2',
+  ]);
+  expect(report.findings).toHaveLength(4);
+  for (const summary of report.summaries) {
+    const [resources, drift] = report.findings.filter(
+      (finding) => finding.traceId === summary.traceId,
+    );
+    const ids = ['op-1', 'op-2', 'op-3', 'op-4'];
+    expect(drift).toMatchObject({ ruleId: 'AWI007', operationIds: ids });
+    expect(resources).toMatchObject({
+      ruleId: 'AWI006',
+      operationIds: ids,
+      evidence: {
+        recordedUsage: { inputTokens: 4 },
+        recordedCosts: { 'currency-1': 4, 'currency-2': 6 },
+        relatedRules: ['AWI007'],
+      },
+    });
+    expect(drift!.evidence.references).toEqual(
+      ids.map((operationId, index) => ({
+        operationId,
+        source: { format: 'awi', index },
+      })),
+    );
+    expect(resources!.evidence.references).toEqual(drift!.evidence.references);
+  }
+  for (const output of [humanReport(report), jsonReport(report)]) {
+    expect(output).not.toMatch(/PRIVATE_|ZZY|ZZZ/);
+  }
 });
 it('AWI007 respects the finding cap on many disjoint runs', () => {
   const ops = calls(5005);

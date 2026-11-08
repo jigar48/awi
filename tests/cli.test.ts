@@ -98,12 +98,12 @@ it('refuses overwrite, hardlinks and output symlinks through exclusive creation'
   expect(
     run(['inspect', path, '--output', output, '--format', 'json']).status,
   ).toBe(2);
-  expect(JSON.parse(readFileSync(output, 'utf8')).version).toBe(1);
+  expect(JSON.parse(readFileSync(output, 'utf8')).version).toBe(2);
   const longOutput = join(folder, 'x'.repeat(230) + '.json');
   expect(
     run(['inspect', path, '--output', longOutput, '--format', 'json']).status,
   ).toBe(2);
-  expect(JSON.parse(readFileSync(longOutput, 'utf8')).version).toBe(1);
+  expect(JSON.parse(readFileSync(longOutput, 'utf8')).version).toBe(2);
   if (process.platform !== 'win32')
     expect(statSync(output).mode & 0o777).toBe(0o600);
   const target = join(folder, 'output-target');
@@ -140,9 +140,13 @@ it('sanitizes terminal controls and keeps content opt-in', () => {
   const result = run(['inspect', path]);
   expect(result.stdout).not.toContain('\u001b');
   expect(result.stdout).not.toContain('\u202e');
-  const json = run(['inspect', path, '--format', 'json']);
+  const json = run(['inspect', path, '--format', 'json', '--show-content']);
   expect(json.stdout).not.toContain('\u202e');
-  expect(JSON.parse(json.stdout).summaries[0].traceId).toContain('\u202e');
+  expect(JSON.parse(json.stdout).content[0].recordedTraceId).toContain(
+    '\u202e',
+  );
+  const shownControls = run(['inspect', path, '--show-content']);
+  expect(shownControls.stdout).not.toMatch(/[\u001b\u202e]/);
   const shown = run(['inspect', input('content.json', 1), '--show-content']);
   expect(shown.stdout).toContain('[REDACTED]');
   expect(shown.stdout).not.toContain('SECRET');
@@ -407,10 +411,23 @@ it('changed documentation contains no Unicode replacement characters', () => {
 });
 
 it('AWI007 JSON, privacy, opt-in and severity exit codes', () => {
-  const path = resolve('examples/suspicious/argument-drift.json');
+  const path = join(folder, 'privacy-drift.json');
+  const trace = JSON.parse(
+    readFileSync('examples/suspicious/argument-drift.json', 'utf8'),
+  );
+  trace.traceId = 'DEMO_TRACE_MARKER';
+  for (const [index, operation] of trace.operations.entries()) {
+    operation.id = `DEMO_OPERATION_MARKER_${index}`;
+    operation.toolName = 'DEMO_TOOL_MARKER';
+    operation.error.code = 'DEMO_CODE_MARKER';
+  }
+  writeFileSync(path, JSON.stringify(trace));
   const config = resolve('examples/argument-drift.config.json');
-  expect(run(['inspect', path, '--format', 'json']).status).toBe(0);
-  const args = ['inspect', path, '--config', config, '--format', 'json'];
+  const disabled = run(['inspect', path, '--format', 'json']);
+  expect(disabled.status).toBe(0);
+  expect(JSON.parse(disabled.stdout).findings).toEqual([]);
+  const inspect = ['inspect', path, '--config', config];
+  const args = [...inspect, '--format', 'json'];
   const result = run(args);
   expect(result.status).toBe(0);
   expect(result.stderr).toBe('');
@@ -420,6 +437,31 @@ it('AWI007 JSON, privacy, opt-in and severity exit codes', () => {
   ]);
   expect(report.findings[0].evidence.failedCalls).toBe(4);
   expect(result.stdout).not.toContain('synthetic-');
+  for (const format of ['json', 'human']) {
+    const command = [...inspect, '--format', format];
+    const { status, stdout } = run(command);
+    expect(status).toBe(0);
+    expect(stdout).toContain('AWI007');
+    expect(stdout).not.toContain('DEMO_');
+    expect(run(command).stdout).toBe(stdout);
+    const output = join(folder, `privacy-report-${format}.txt`);
+    expect(run([...command, '--output', output]).status).toBe(0);
+    expect(readFileSync(output, 'utf8')).toBe(stdout);
+  }
+  const shown = JSON.parse(run([...args, '--show-content']).stdout);
+  expect(shown.findings).toEqual(report.findings);
+  expect(shown.content[0]).toMatchObject({
+    traceId: report.summaries[0].traceId,
+    recordedTraceId: 'DEMO_TRACE_MARKER',
+    operations: [
+      {
+        id: 'DEMO_OPERATION_MARKER_0',
+        toolName: 'DEMO_TOOL_MARKER',
+        error: { code: 'DEMO_CODE_MARKER' },
+      },
+      ...trace.operations.slice(1),
+    ],
+  });
   expect(run([...args, '--fail-on', 'medium']).status).toBe(2);
   expect(run([...args, '--fail-on', 'low']).status).toBe(2);
   expect(run([...args, '--fail-on', 'none']).status).toBe(0);

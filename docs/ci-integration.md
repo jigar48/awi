@@ -1,6 +1,6 @@
 # CI integration
 
-AWI analyzes local JSON and sends no telemetry. Use synthetic traces for examples; review reports before sharing because identifiers can contain sensitive data.
+AWI analyzes local JSON and sends no telemetry. Use synthetic traces for examples. Review reports before sharing because workflow measurements, source indices and relationships can be sensitive. See the [security and privacy documentation](security.md).
 
 ## Inside the AWI repository
 

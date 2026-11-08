@@ -163,7 +163,7 @@ program
   .option('--no-color', 'Disable colors (output is plain text)')
   .option(
     '--show-content',
-    'Include recorded content with key-based redaction; may expose private data',
+    'Include recorded IDs, labels and payloads with key-based redaction; may expose private data',
   )
   .action(
     async (

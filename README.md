@@ -149,17 +149,21 @@ awi inspect <paths...> [options]
 
 ### Options
 
-| Flag             | Argument                              | Description                                                     | Default  |
-| ---------------- | ------------------------------------- | --------------------------------------------------------------- | -------- |
-| `--format`       | `human` \| `json`                     | Output presentation format.                                     | `human`  |
-| `--input-format` | `auto` \| `awi` \| `otel`             | Input parser mode. `auto` detects format from root structure.   | `auto`   |
-| `--fail-on`      | `low` \| `medium` \| `high` \| `none` | Minimum finding severity that causes exit code 2.               | `high`   |
-| `--output`       | `<path>`                              | Write structured report to a new file (existing files refused). | none     |
-| `--config`       | `<path>`                              | Path to custom `awi.config.json` threshold configuration.       | none     |
-| `--show-content` | none                                  | Include recorded message/payload content (with key redaction).  | disabled |
-| `--no-color`     | none                                  | Disable terminal ANSI color codes.                              | disabled |
-| `-V, --version`  | none                                  | Display version number.                                         |          |
-| `-h, --help`     | none                                  | Display CLI help.                                               |          |
+| Flag             | Argument                              | Description                                                       | Default  |
+| ---------------- | ------------------------------------- | ----------------------------------------------------------------- | -------- |
+| `--format`       | `human` \| `json`                     | Output presentation format.                                       | `human`  |
+| `--input-format` | `auto` \| `awi` \| `otel`             | Input parser mode. `auto` detects format from root structure.     | `auto`   |
+| `--fail-on`      | `low` \| `medium` \| `high` \| `none` | Minimum finding severity that causes exit code 2.                 | `high`   |
+| `--output`       | `<path>`                              | Write structured report to a new file (existing files refused).   | none     |
+| `--config`       | `<path>`                              | Path to custom `awi.config.json` threshold configuration.         | none     |
+| `--show-content` | none                                  | Include recorded IDs, labels and payloads with limited redaction. | disabled |
+| `--no-color`     | none                                  | Disable terminal ANSI color codes.                                | disabled |
+| `-V, --version`  | none                                  | Display version number.                                           |          |
+| `-h, --help`     | none                                  | Display CLI help.                                                 |          |
+
+### Sharing reports
+
+Human and JSON reports use report-local trace and operation references. They omit recorded names, tool names, error codes, payloads, and fingerprint values, including when AWI007 is enabled. Counts, timing, resource amounts, source indices, and operation relationships remain visible. Use `--show-content` (or `analyze(traces, config, true)`) only for private inspection. It can expose recorded identifiers, labels and payloads despite key-based redaction. See the [synthetic before/after example](docs/security.md#synthetic-before-and-after) and [report v2 migration notes](docs/report-schema.md).
 
 ### Exit Codes
 
